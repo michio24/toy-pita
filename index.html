@@ -433,26 +433,26 @@ const LEVELS = [
     goals: [{ kind: 'bell' }],
     star: { x: 0.2, y: 4.6 },
     par: 1,
-    solution: [{ type: 'spring', x: -6.1, y: 0.3, angle: -30 }],
+    solution: [{ type: 'spring', x: -6.1, y: 0.45, angle: -30 }],
   },
   {
     id: 's3', name: 'ドミノでドン', goalText: 'ゴールのビー玉をカゴに落とそう',
     hint: 'ゼンマイ車は段差を越えられない。ドミノで力をつないで、段差の向こうへ伝えよう。',
     terrain: [
       { x: -1.5, y: 2.35, w: 9.8, h: 0.3, c: 'blue' },
-      { x: 1.2, y: 2.65, w: 0.6, h: 0.3, c: 'red' },
+      { x: 2.15, y: 2.65, w: 2.5, h: 0.3, c: 'red' }, // 段差は棚の右端まで（はみ出して置いた部品が勝手に倒れてビー玉を押さないように）
       { x: -6.25, y: 1.1, w: 0.3, h: 2.2, c: 'blue' },
     ],
     fixed: [
       { type: 'car', x: -5.6, y: 2.76 },
-      { type: 'marble', x: 2.55, y: 2.76, target: true },
+      { type: 'marble', x: 2.55, y: 3.06, target: true },
       { type: 'basket', x: 4.5, y: 0 },
     ],
     inv: { domino: 8, block: 2 },
     goals: [{ kind: 'basket', count: 1 }],
-    star: { x: 1.2, y: 3.3 },
+    star: { x: 4.1, y: 2.4 }, // 段差の上に立てたドミノでは届かず、カゴへ飛ぶビー玉が取る位置
     par: 2,
-    solution: [{ type: 'domino', x: 1.9, y: 3.6 }, { type: 'domino', x: 1.55, y: 3.6 }],
+    solution: [{ type: 'domino', x: 1.75, y: 3.2 }, { type: 'domino', x: 0.98, y: 3.2 }],
   },
   {
     id: 's4', name: 'カーブでびゅん', goalText: '落ちてくるビー玉で、壁の向こうのベルを鳴らそう',
@@ -496,6 +496,7 @@ const LEVELS = [
     terrain: [
       { x: 6.4, y: 6.6, w: 4.0, h: 0.3, a: 8, c: 'green' },
       { x: 2.4, y: 6.9, w: 1.6, h: 0.3, c: 'yellow' },
+      { x: 3.5, y: 8.75, w: 0.3, h: 2.7, c: 'yellow' }, // ベルを飛び越えたビー玉を受け止める壁
     ],
     fixed: [
       { type: 'seesaw', x: -1.6, y: 0.72, angle: 20 },
@@ -505,7 +506,7 @@ const LEVELS = [
     ],
     inv: { plank: 2, curve: 1 },
     goals: [{ kind: 'bell' }],
-    star: { x: 0.0, y: 8.6 },
+    star: { x: 1.2, y: 8.2 },
     par: 1,
     solution: [{ type: 'plank', x: 2.4, y: 5.2, angle: 0 }],
   },
@@ -524,7 +525,7 @@ const LEVELS = [
     goals: [{ kind: 'basket', count: 1 }],
     star: { x: 2.3, y: 5.0 },
     par: 2,
-    solution: [{ type: 'pendulum', x: -1.2, y: 7.0, angle: -90 }],
+    solution: [{ type: 'pendulum', x: -0.4, y: 6.8, angle: -105 }],
   },
   {
     id: 's8', name: '大砲ドーン', goalText: '大砲の弾で、塔の上のベルを鳴らそう',
@@ -542,7 +543,7 @@ const LEVELS = [
     goals: [{ kind: 'bell', any: true }],
     star: { x: 2.8, y: 8.6 },
     par: 2,
-    solution: [{ type: 'plank', x: -2.6, y: 4.0, angle: -25 }, { type: 'cannon', x: -0.2, y: 0.45, angle: 75 }],
+    solution: [{ type: 'plank', x: -2.6, y: 4.0, angle: -30 }, { type: 'cannon', x: -0.2, y: 0.45, angle: 75 }],
   },
   {
     id: 's9', name: 'コンベア工場', goalText: '積み木を3つともおもちゃ箱に入れよう',
@@ -561,7 +562,7 @@ const LEVELS = [
     goals: [{ kind: 'basket', count: 3 }],
     star: { x: 1.0, y: 4.6 },
     par: 4,
-    solution: [{ type: 'plank', x: -4.2, y: 5.2, angle: -35 }, { type: 'conveyor', x: -1.8, y: 3.8, angle: 0 }, { type: 'conveyor', x: 1.0, y: 3.8, angle: 0 }, { type: 'plank', x: 4.2, y: 2.1, angle: -35 }],
+    solution: [{ type: 'plank', x: -4.2, y: 5.2, angle: -30 }, { type: 'conveyor', x: -1.8, y: 3.8, angle: 0 }, { type: 'conveyor', x: 1.0, y: 3.8, angle: 0 }, { type: 'plank', x: 4.2, y: 2.55, angle: -30 }],
   },
   {
     id: 's10', name: 'トイピタ大作戦', goalText: '風船を割って、ベルも鳴らそう',
@@ -578,9 +579,9 @@ const LEVELS = [
     ],
     inv: { cannon: 1, plank: 3, curve: 1, domino: 3 },
     goals: [{ kind: 'pop' }, { kind: 'bell' }],
-    star: { x: 1.2, y: 6.8 },
+    star: { x: 0.5, y: 7.9 },
     par: 3,
-    solution: [{ type: 'cannon', x: -3.4, y: 4.6, angle: 45 }, { type: 'plank', x: -1.2, y: 4.0, angle: -16 }, { type: 'plank', x: 0.6, y: 2.9, angle: -12 }],
+    solution: [{ type: 'cannon', x: -3.4, y: 4.6, angle: 45 }, { type: 'plank', x: -1.2, y: 4.0, angle: -15 }, { type: 'plank', x: 0.6, y: 2.9, angle: -15 }],
   },
   {
     id: 'sandbox', name: 'サンドボックス', goalText: '自由に装置を作ろう',
