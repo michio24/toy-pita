@@ -161,6 +161,10 @@ button:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
 .scard:active { transform: translateY(3px); box-shadow: 0 1px 0 #d7e3ec; }
 .snum { font-family: var(--font-display); font-size: 11px; letter-spacing: .08em; color: var(--blue); }
 .scard.sandbox .snum { color: var(--yellow-d); }
+.scard.hard { background: #fbeef3; box-shadow: 0 4px 0 #efc9d8; }
+.scard.hard.current { background: #f8dfe9; box-shadow: 0 4px 0 #e4a9c0; }
+.scard.hard .snum { color: #c23d6e; }
+.snum em { font-style: normal; margin-left: 6px; padding: 1px 6px; border-radius: 6px; background: #c23d6e; color: #fff; font-size: 10px; letter-spacing: .04em; }
 .sname { font-weight: 900; font-size: 16px; }
 .sgoal { font-size: 12px; color: var(--ink-soft); font-weight: 700; line-height: 1.45; }
 .sicons { display: flex; gap: 2px; flex-wrap: wrap; margin-top: 2px; }
@@ -396,7 +400,7 @@ const XYLO_NOTES = [
 const XYLO_MIN_DV = 0.8; // 鳴らすのに必要な衝突の強さ（速度変化）。転がるだけでは鳴らない
 
 // ---------- Levels ----------
-// terrain: {x,y,w,h,a,c} centre/size/angle(deg)/colour key.  goals: [{kind:'bell'|'basket'|'pop', count}]
+// terrain: {x,y,w,h,a,c} centre/size/angle(deg)/colour key.  goals: [{kind:'bell'|'basket'|'pop'|'whistle'|'melody', count, notes}]  hard: 上級ステージ
 const LEVELS = [
   {
     id: 's1', name: 'ころがれビー玉', goalText: 'ビー玉でベルを鳴らそう',
@@ -582,6 +586,108 @@ const LEVELS = [
     star: { x: 0.5, y: 7.9 },
     par: 3,
     solution: [{ type: 'cannon', x: -3.4, y: 4.6, angle: 45 }, { type: 'plank', x: -1.2, y: 4.0, angle: -15 }, { type: 'plank', x: 0.6, y: 2.9, angle: -15 }],
+  },
+  // ---- 上級ステージ ----
+  {
+    id: 's11', name: 'スイッチ・オン', goalText: '扇風機のスイッチを入れて、風船を割り、笛も鳴らそう', hard: true,
+    hint: '扇風機は最初オフ。ビー玉を勢いよく当てるとスイッチが入る。押し出された風船は上へ昇っていく。',
+    terrain: [
+      { x: -6.5, y: 8.6, w: 3.8, h: 0.3, a: 8, c: 'green' },
+      { x: -4.5, y: 2.0, w: 0.3, h: 4.0, c: 'yellow' },
+      { x: -1.2, y: 4.45, w: 1.4, h: 0.3, c: 'blue' },
+      { x: -3.1, y: 5.0, w: 2.8, h: 0.3, a: -12, c: 'blue' },
+      { x: 2.4, y: 6.5, w: 3.6, h: 0.3, c: 'red' },
+    ],
+    fixed: [
+      { type: 'marble', x: -4.95, y: 9.05, target: true },
+      { type: 'fan', x: -1.2, y: 5.15, off: true },
+      { type: 'balloon', x: 1.4, y: 5.9, goal: true },
+    ],
+    inv: { plank: 2, curve: 1, spring: 1, pin: 1, whistle: 1 },
+    goals: [{ kind: 'pop' }, { kind: 'whistle' }],
+    star: { x: -5.6, y: 7.3 },
+    par: 3,
+    solution: [{ type: 'spring', x: -8.2, y: 2.6, angle: -15 }, { type: 'pin', x: 6.9, y: 9.55, angle: 180 }, { type: 'whistle', x: 2.0, y: 4.6 }],
+  },
+  {
+    id: 's12', name: 'ドレミの階段', goalText: '鉄琴で「ド・ミ・ソ・高ド」を順に鳴らして、ベルも鳴らそう', hard: true,
+    hint: '鉄琴は選択して音を変えられる。違う音が途中で鳴るとメロディは最初からやり直し。高いソへはバネで。',
+    terrain: [
+      { x: -7.7, y: 8.9, w: 2.4, h: 0.3, a: -10, c: 'green' },
+      { x: -3.0, y: 2.6, w: 4.4, h: 0.3, a: -15, c: 'red' },
+      { x: 0.6, y: 7.6, w: 0.3, h: 5.0, c: 'yellow' },
+    ],
+    fixed: [
+      { type: 'marble', x: -8.4, y: 9.35, target: true },
+      { type: 'bell', x: 8.2, y: 0 },
+      { type: 'xylo', x: 4.2, y: 6.3, angle: -15, note: 3 },
+    ],
+    inv: { xylo: 3, spring: 1, plank: 2, drum: 1 },
+    goals: [{ kind: 'melody', notes: [0, 2, 3, 5] }, { kind: 'bell' }],
+    star: { x: 2.6, y: 4.4 },
+    par: 4,
+    solution: [{ type: 'xylo', x: -5.6, y: 7.1, note: 0 }, { type: 'xylo', x: -4.0, y: 5.4, note: 2 }, { type: 'spring', x: 1.6, y: 0.7, angle: -30 }, { type: 'xylo', x: 4.2, y: 2.0, angle: -15, note: 5 }],
+  },
+  {
+    id: 's13', name: '風の配達', goalText: '大砲で扇風機のスイッチを入れて、ビー玉を 2 つともおもちゃ箱へ', hard: true,
+    hint: 'ゼンマイ車が大砲にぶつかると弾が出る。扇風機は弾が当たってもスイッチが入る。',
+    terrain: [
+      { x: -2.5, y: 6.0, w: 6.0, h: 0.3, c: 'blue' },
+    ],
+    fixed: [
+      { type: 'car', x: 7.6, y: 0.3, flip: true },
+      { type: 'fan', x: 0.0, y: 6.7, flip: true, off: true },
+      { type: 'marble', x: -1.6, y: 6.4, target: true },
+      { type: 'marble', x: -2.8, y: 6.4, target: true },
+      { type: 'toybox', x: -4.6, y: 0 },
+    ],
+    inv: { cannon: 1, plank: 3, curve: 1, spring: 1 },
+    goals: [{ kind: 'basket', count: 2 }],
+    star: { x: -6.6, y: 9.0 },
+    par: 3,
+    solution: [{ type: 'cannon', x: 5.5, y: 0.6, angle: 60, flip: true }, { type: 'plank', x: -7.5, y: 4.2, angle: -45 }, { type: 'spring', x: -7.1, y: 5.3, angle: -15 }],
+  },
+  {
+    id: 's14', name: 'ダブルバルーン', goalText: '風船を 2 つとも割って、ベルも鳴らそう', hard: true,
+    hint: '大砲の弾は風船を割ったあとも飛び続ける。弾が扇風機に当たるとスイッチが入る。',
+    terrain: [
+      { x: -7.4, y: 8.0, w: 3.4, h: 0.3, a: -10, c: 'green' },
+      { x: 0.0, y: 9.3, w: 3.0, h: 0.3, c: 'red' },
+      { x: 2.4, y: 7.7, w: 3.0, h: 0.3, c: 'blue' },
+      { x: 5.5, y: 6.0, w: 1.4, h: 0.3, c: 'yellow' },
+    ],
+    fixed: [
+      { type: 'marble', x: -8.6, y: 8.75, target: true },
+      { type: 'balloon', x: 0.0, y: 8.7, goal: true },
+      { type: 'balloon', x: 2.4, y: 7.1, goal: true },
+      { type: 'fan', x: 5.5, y: 6.7, flip: true, off: true },
+      { type: 'bell', x: 7.6, y: 0 },
+    ],
+    inv: { cannon: 1, pin: 1, plank: 3, curve: 1 },
+    goals: [{ kind: 'pop' }, { kind: 'bell' }],
+    star: { x: -4.4, y: 2.5 },
+    par: 3,
+    solution: [{ type: 'cannon', x: -4.1, y: 5.4, angle: 45 }, { type: 'pin', x: -2.4, y: 9.55, angle: 180 }, { type: 'plank', x: -5.8, y: 2.6, angle: -30 }],
+  },
+  {
+    id: 's15', name: 'トイピタ・フィナーレ', goalText: '「ソ・ミ・ド」を鳴らし、笛を吹かせて、ベルも鳴らそう', hard: true,
+    hint: '太鼓で弾めば壁を越えられる。扇風機の風は笛を鳴らし、スーパーボールも転がす。',
+    terrain: [
+      { x: -7.7, y: 8.9, w: 2.4, h: 0.3, a: -10, c: 'green' },
+      { x: -1.0, y: 3.2, w: 3.6, h: 0.3, a: -15, c: 'red' },
+      { x: 2.6, y: 1.1, w: 0.3, h: 2.2, c: 'yellow' },
+    ],
+    fixed: [
+      { type: 'marble', x: -8.4, y: 9.35, target: true },
+      { type: 'fan', x: 4.4, y: 0.55, off: true },
+      { type: 'superball', x: 6.0, y: 0.22 },
+      { type: 'bell', x: 8.0, y: 0 },
+    ],
+    inv: { xylo: 3, drum: 1, whistle: 1, plank: 2 },
+    goals: [{ kind: 'melody', notes: [3, 2, 0] }, { kind: 'whistle' }, { kind: 'bell', any: true }],
+    star: { x: 3.2, y: 3.6 },
+    par: 5,
+    solution: [{ type: 'xylo', x: -5.6, y: 7.1, note: 3 }, { type: 'xylo', x: -4.0, y: 5.4, note: 2 }, { type: 'xylo', x: -2.4, y: 4.6, angle: -15, note: 0 }, { type: 'drum', x: 1.6, y: 2.2, angle: 15 }, { type: 'whistle', x: 6.5, y: 1.0 }],
   },
   {
     id: 'sandbox', name: 'サンドボックス', goalText: '自由に装置を作ろう',
@@ -842,7 +948,7 @@ function Sim(level, objects) {
     }
   }
   this.star = level.star ? { x: level.star.x, y: level.star.y, r: 0.38 } : null;
-  this.goals = (level.goals || []).map(g => ({ ...g, done: false }));
+  this.goals = (level.goals || []).map(g => ({ ...g, done: false })); this.melody = [];
   this.balloonGoal = this.balloons.filter(b => b.obj.goal);
   if (!this.balloonGoal.length) this.balloonGoal = this.balloons;
 
@@ -974,7 +1080,7 @@ Sim.prototype.step = function () {
       const other = ib === im.A ? im.B : im.A, it = this.instr.find(q => q.body === ib);
       const dv = other.isDynamic() ? im.n / Math.max(0.05, other.getMass()) : 0;
       if (it && dv > XYLO_MIN_DV) {
-        if (t - it.ringAt > 0.12) { it.ringAt = t; this.ev(it.obj.type, im.x, im.y, { id: it.obj.id, note: it.obj.note || 0, v: Math.min(1, dv / 6) }); }
+        if (t - it.ringAt > 0.12) { it.ringAt = t; this.ev(it.obj.type, im.x, im.y, { id: it.obj.id, note: it.obj.note || 0, v: Math.min(1, dv / 6) }); if (it.obj.type === 'xylo') this.playNote(it.obj.note || 0, it.obj.x, it.obj.y); }
         continue;
       }
     }
@@ -985,7 +1091,10 @@ Sim.prototype.step = function () {
     let str = 0;
     for (const fan of this.fans) { const k = this.windAt(fan, w.obj.x, w.obj.y); if (k > str && !this.windBlocked(fan, w)) str = k; }
     const on = str > 0;
-    if (on !== w.on) { w.on = on; this.ev('whistle', w.obj.x, w.obj.y + 0.3, { id: w.obj.id, on, s: str }); }
+    if (on !== w.on) {
+      w.on = on; this.ev('whistle', w.obj.x, w.obj.y + 0.3, { id: w.obj.id, on, s: str });
+      if (on) for (const g of this.goals) if (g.kind === 'whistle' && !g.done) { g.done = true; this.goalPos = { x: w.obj.x, y: w.obj.y + 0.3 }; }
+    }
   }
   // rolling intensity (audio)
   let roll = 0;
@@ -1024,6 +1133,20 @@ Sim.prototype.step = function () {
     if (g.kind === 'pop' && this.balloonGoal.length && this.balloonGoal.every(b => b.popped)) { g.done = true; const b = this.balloonGoal[this.balloonGoal.length - 1].body.getPosition(); this.goalHit(null, b.x, b.y); }
   }
   if (!this.won && this.goals.length && this.goals.every(g => g.done)) { this.won = true; this.wonAt = t; this.ev('win', this.goalPos ? this.goalPos.x : 0, this.goalPos ? this.goalPos.y : 0); }
+};
+Sim.prototype.playNote = function (n, x, y) {
+  const seq = this.melody; if (seq[seq.length - 1] !== n) seq.push(n);
+  for (const g of this.goals) {
+    if (g.kind !== 'melody' || g.done) continue;
+    const k = g.notes.length; if (seq.length >= k && g.notes.every((v, i) => seq[seq.length - k + i] === v)) { g.done = true; this.goalPos = { x, y: y + 0.6 }; }
+  }
+};
+// メロディの進み具合：鳴った順の末尾が、notes の先頭から何音一致しているか
+Sim.prototype.melodyProgress = function (g) {
+  if (g.done) return g.notes.length;
+  const seq = this.melody;
+  for (let k = Math.min(g.notes.length - 1, seq.length); k > 0; k--) if (g.notes.slice(0, k).every((v, i) => seq[seq.length - k + i] === v)) return k;
+  return 0;
 };
 Sim.prototype.goalHit = function (kind, x, y) {
   if (kind) for (const g of this.goals) if (g.kind === kind) g.done = true;
@@ -2088,7 +2211,9 @@ function useHint() {
   if (G.hintStep === 0 || !sol.length) { G.hintStep = 1; toast(G.level.hint + (sol.length ? '（もう一度押すと、置き場所を1つ見せます）' : ''), 5200); return; }
   const k = (G.hintStep - 1) % sol.length; G.hintStep++;
   showHintGhost(k, false);
-  toast(`置き場所のヒント ${k + 1}/${sol.length}：青い影の位置に「${PARTS[sol[k].type].name}」`, 4200);
+  // 鉄琴の音や扇風機の初期状態は影では分からないので、名前に添える
+  const q = sol[k], extra = q.type === 'xylo' ? `（♪${XYLO_NOTES[q.note || 0].name}）` : q.type === 'fan' ? (q.off ? '（最初OFF）' : '（最初ON）') : '';
+  toast(`置き場所のヒント ${k + 1}/${sol.length}：青い影の位置に「${PARTS[q.type].name}${extra}」`, 4200);
 }
 
 // ---------- Ghost trail of the previous run ----------
@@ -2192,7 +2317,7 @@ function updateRun(realDt) {
   let steps = 0;
   while (G.acc >= DT && steps < 8) {
     s.step(); G.frames.push(s.snapshot()); G.acc -= DT; steps++;
-    while (G.evCursor < s.events.length) { const ev = s.events[G.evCursor++]; playEvent(ev, true); if (ev.type === 'bell' || ev.type === 'basket' || ev.type === 'pop') updateObjectives(); }
+    while (G.evCursor < s.events.length) { const ev = s.events[G.evCursor++]; playEvent(ev, true); if (ev.type === 'bell' || ev.type === 'basket' || ev.type === 'pop' || ev.type === 'xylo' || (ev.type === 'whistle' && ev.on)) updateObjectives(); }
     if (s.won && !G.slow) { G.slow = { t: 0, focus: s.goalPos || { x: 0, y: 4 } }; G.mode = 'slow'; G.speed = 1; showPita(); renderHUD(); }
   }
   if (steps) applyFrame(G.frames[G.frames.length - 1], G.frames[G.frames.length - 1 - steps] || null);
@@ -2301,11 +2426,11 @@ const ICONS = {
   basket: '<svg viewBox="0 0 40 40"><path d="M7 13h26l-3 20H10z" fill="#2fae66"/><path d="M11 18h18M11 23h17M12 28h16" stroke="#bfe9d1" stroke-width="1.6"/></svg>',
   toybox: '<svg viewBox="0 0 40 40"><rect x="5" y="13" width="30" height="20" rx="3" fill="#f08a2c"/><rect x="5" y="13" width="30" height="5" fill="#f5c02f"/></svg>',
 };
-function goalIcon(g) { return g.kind === 'bell' ? ICONS.bell : g.kind === 'pop' ? ICONS.balloon : (G.level.fixed.some(f => f.type === 'toybox') ? ICONS.toybox : ICONS.basket); }
-function goalLabel(g) { return g.kind === 'bell' ? 'ベル' : g.kind === 'pop' ? '風船' : (G.level.fixed.some(f => f.type === 'toybox') ? '箱に入れる' : 'カゴに入れる'); }
+function goalIcon(g) { return g.kind === 'bell' ? ICONS.bell : g.kind === 'pop' ? ICONS.balloon : g.kind === 'whistle' ? ICONS.whistle : g.kind === 'melody' ? ICONS.xylo : (G.level.fixed.some(f => f.type === 'toybox') ? ICONS.toybox : ICONS.basket); }
+function goalLabel(g) { return g.kind === 'bell' ? 'ベル' : g.kind === 'pop' ? '風船' : g.kind === 'whistle' ? '笛' : g.kind === 'melody' ? g.notes.map(n => XYLO_NOTES[n].name).join('→') : (G.level.fixed.some(f => f.type === 'toybox') ? '箱に入れる' : 'カゴに入れる'); }
 function renderHUD() {
   const L = G.level; if (!L) return;
-  $('#stageNum').textContent = L.sandbox ? 'FREE' : `STAGE ${G.levelIdx + 1}`;
+  $('#stageNum').textContent = L.sandbox ? 'FREE' : `STAGE ${G.levelIdx + 1}${L.hard ? ' ・上級' : ''}`;
   $('#stageName').textContent = L.name;
   $('#goalText').textContent = L.goalText;
   const run = $('#runBtn');
@@ -2329,7 +2454,8 @@ function updateObjectives() {
   const live = G.sim ? G.sim.goals : null;
   const goals = (L.goals || []).map((g, i) => {
     const done = live && live[i] && live[i].done;
-    let extra = ''; if (g.kind === 'basket') { const bk = G.sim && G.sim.baskets[0]; extra = ` <b>${bk ? bk.count : 0}/${g.count || 1}</b>`; }
+    let extra = ''; if (g.kind === 'melody') extra = ` <b>${live ? G.sim.melodyProgress(live[i]) : 0}/${g.notes.length}</b>`;
+    if (g.kind === 'basket') { const bk = G.sim && G.sim.baskets[0]; extra = ` <b>${bk ? bk.count : 0}/${g.count || 1}</b>`; }
     return `<span class="obj goal ${done ? 'done' : ''}"><i class="gi">${goalIcon(g)}</i>${goalLabel(g)}${extra}</span>`;
   }).join('');
   el.innerHTML = goals + `<span class="obj ${used <= L.par ? '' : 'bad'}">${STAR_SVG}部品${L.par}個以内 <b>${used}/${L.par}</b></span><span class="obj">${STAR_SVG}スター</span>` + (best ? `<span class="obj best">ベスト ${'★'.repeat(best)}${'☆'.repeat(3 - best)}</span>` : '');
@@ -2377,10 +2503,10 @@ function toast(msg, ms = 2400) { const t = $('#toast'); t.textContent = msg; t.h
 function openStages() {
   const g = $('#stageGrid'); g.innerHTML = '';
   LEVELS.forEach((L, i) => {
-    const b = document.createElement('button'); b.type = 'button'; b.className = 'scard' + (L.sandbox ? ' sandbox' : '') + (i === G.levelIdx ? ' current' : '');
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'scard' + (L.sandbox ? ' sandbox' : '') + (L.hard ? ' hard' : '') + (i === G.levelIdx ? ' current' : '');
     const best = G.best[L.id] || 0;
     const icons = L.sandbox ? '' : `<span class="sicons">${Object.keys(L.inv).map(t => `<i>${ICONS[t]}</i>`).join('')}</span>`;
-    b.innerHTML = `<span class="snum">${L.sandbox ? 'FREE' : 'STAGE ' + (i + 1)}</span><span class="sname">${L.name}</span><span class="sgoal">${L.goalText}</span>${icons}` + (L.sandbox ? '<span class="sstars free">部品使い放題</span>' : `<span class="sstars">${[0, 1, 2].map(k => `<i class="${k < best ? 'on' : ''}">${STAR_SVG}</i>`).join('')}</span>`);
+    b.innerHTML = `<span class="snum">${L.sandbox ? 'FREE' : 'STAGE ' + (i + 1)}${L.hard ? '<em>上級</em>' : ''}</span><span class="sname">${L.name}</span><span class="sgoal">${L.goalText}</span>${icons}` + (L.sandbox ? '<span class="sstars free">部品使い放題</span>' : `<span class="sstars">${[0, 1, 2].map(k => `<i class="${k < best ? 'on' : ''}">${STAR_SVG}</i>`).join('')}</span>`);
     b.addEventListener('click', () => { $('#stages').hidden = true; loadLevel(i); });
     g.appendChild(b);
   });
