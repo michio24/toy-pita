@@ -336,7 +336,8 @@ body.dopa .ono { text-shadow: 0 4px 0 var(--ink), 0 0 18px rgba(255,255,255,.8);
 const DEG = Math.PI / 180;
 const DT = 1 / 60;
 const BOARD = { w: 18.2, h: 10.2, cx: 0, cy: 5.0, z: -0.72, pitch: 0.5 };
-const STAGE = { xmin: BOARD.cx - BOARD.w / 2, xmax: BOARD.cx + BOARD.w / 2, ymin: BOARD.cy - BOARD.h / 2, ymax: BOARD.cy + BOARD.h / 2 };
+const FLOOR_Y = 0;
+const STAGE = { xmin: BOARD.cx - BOARD.w / 2, xmax: BOARD.cx + BOARD.w / 2, ymin: Math.max(FLOOR_Y, BOARD.cy - BOARD.h / 2), ymax: BOARD.cy + BOARD.h / 2 };
 
 // ---------- shape helpers ----------
 const SC = (cx, cy, r) => ({ k: 'c', cx, cy, r });
@@ -1187,7 +1188,7 @@ const room = new THREE.Group(); scene.add(room);
   bg.position.set(0, 9, -16); room.add(bg);
   const glow = new THREE.Mesh(new THREE.PlaneGeometry(22, 22), new THREE.MeshBasicMaterial({ map: windowGlowTex(), color: new THREE.Color(2.2, 2.1, 1.9), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
   glow.position.set(-21, 14, -15.8); room.add(glow);
-  room.add(at(mesh(new THREE.BoxGeometry(80, 1, 40), MAT.desk, false, true), 0, -0.5, 14));
+  room.add(at(mesh(new THREE.BoxGeometry(80, 1, 40), MAT.desk, false, true), 0, FLOOR_Y - 0.5, 14));
   const apron = at(mesh(new THREE.BoxGeometry(80, 30, 1), new THREE.MeshStandardMaterial({ color: 0x6b4426, roughness: 0.8 }), false, false), 0, -15.9, 33.5); room.add(apron);
   const pb = pegboardTextures();
   capTex(pb.map, BOARD.w, BOARD.h); capTex(pb.bump, BOARD.w, BOARD.h);
