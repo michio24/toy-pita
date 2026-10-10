@@ -100,6 +100,7 @@ button:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
 #selbar button:hover { background: rgba(255,255,255,.14); }
 #selbar svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.3; stroke-linecap: round; stroke-linejoin: round; }
 #selbar #delB { color: #ff9a90; }
+#selbar #noteB { width: auto; min-width: 40px; padding: 0 8px; font: 800 13px 'M PLUS Rounded 1c', sans-serif; color: var(--nc, #fff); white-space: nowrap; }
 
 /* ---------- toast, banner, onomatopoeia ---------- */
 #toast { position: absolute; left: 50%; top: 96px; transform: translate(-50%, -8px); max-width: min(600px, calc(100% - 32px)); padding: 10px 16px; background: var(--ink); color: #fff; border-radius: 14px; font-size: 14px; font-weight: 700; line-height: 1.55; text-align: center; opacity: 0; transition: opacity .25s, transform .25s; pointer-events: none; z-index: 6; text-wrap: balance; }
@@ -279,6 +280,7 @@ body.dopa .ono { text-shadow: 0 4px 0 var(--ink), 0 0 18px rgba(255,255,255,.8);
     <span id="selName"></span>
     <button id="rotL" type="button" aria-label="左に回す（Q）"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/></svg></button>
     <button id="rotR" type="button" aria-label="右に回す（E）"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v5h-5"/></svg></button>
+    <button id="noteB" type="button" aria-label="音の高さを変える（N）"></button>
     <button id="flipB" type="button" aria-label="向きを反転（F）"><svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M8 7L3 12l5 5z"/><path d="M16 7l5 5-5 5z"/></svg></button>
     <button id="delB" type="button" aria-label="トレイに戻す"><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg></button>
   </div>
@@ -367,6 +369,7 @@ const PARTS = {
   seesaw:    { name: 'シーソー', rot: true, selfRot: true, rotMin: -25, rotMax: 25,
                fp: (o) => [SB(0, -0.36, 0.6, 0.7), SB(0, 0.07, 3.2, 0.14, o.angle || 0)] },
   car:       { name: 'ゼンマイ車', drop: true, flip: true, fp: () => [SB(0, 0, 0.95, 0.5)] },
+  xylo:      { name: '鉄琴', rot: true, fp: () => [SB(0, 0, 1.3, 0.3)] },
   bell:      { name: 'ベル', fp: () => [SC(0, 0.9, 0.42), SB(0, 0.25, 0.14, 0.5), SB(0, 0.04, 0.7, 0.08)] },
   basket:    { name: 'カゴ', fp: () => [SB(0, 0.06, 1.5, 0.12), SB(-0.69, 0.5, 0.12, 1.0), SB(0.69, 0.5, 0.12, 1.0)] },
   toybox:    { name: 'おもちゃ箱', fp: () => [SB(0, 0.07, 2.6, 0.14), SB(-1.24, 0.6, 0.12, 1.2), SB(1.24, 0.6, 0.12, 1.2)] },
@@ -378,7 +381,14 @@ const PARTS = {
   cannon:    { name: '大砲', rot: true, flip: true, selfRot: true, rotMin: -30, rotMax: 75,
                fp: (o) => { const a = (o.angle || 0) * DEG; const [bx, by] = rotP(0.3, 0, a); return [SB(-0.05, -0.2, 0.9, 0.44), SB(CANNON_PIVOT[0] + bx, CANNON_PIVOT[1] + by, 0.85, 0.34, o.angle || 0)]; } },
 };
-const PART_ORDER = ['marble', 'superball', 'ironball', 'domino', 'block', 'plank', 'curve', 'spring', 'conveyor', 'fan', 'seesaw', 'pendulum', 'cannon', 'car', 'balloon', 'pin', 'bell', 'basket', 'toybox'];
+const PART_ORDER = ['marble', 'superball', 'ironball', 'domino', 'block', 'plank', 'curve', 'spring', 'conveyor', 'fan', 'seesaw', 'pendulum', 'cannon', 'car', 'balloon', 'pin', 'bell', 'xylo', 'basket', 'toybox'];
+// 鉄琴の音階：ペンタトニック（ド レ ミ ソ ラ）なので、どの順に鳴っても濁らない
+const XYLO_NOTES = [
+  { name: 'ド', f: 523.25, css: '#e5483b' }, { name: 'レ', f: 587.33, css: '#f08a2c' }, { name: 'ミ', f: 659.26, css: '#f5c02f' },
+  { name: 'ソ', f: 783.99, css: '#2fae66' }, { name: 'ラ', f: 880.0, css: '#2fb8c9' }, { name: '高ド', f: 1046.5, css: '#2f7de1' },
+  { name: '高レ', f: 1174.66, css: '#8a63d2' }, { name: '高ミ', f: 1318.51, css: '#ef7aa6' },
+];
+const XYLO_MIN_DV = 0.8; // 鳴らすのに必要な衝突の強さ（速度変化）。転がるだけでは鳴らない
 
 // ---------- Levels ----------
 // terrain: {x,y,w,h,a,c} centre/size/angle(deg)/colour key.  goals: [{kind:'bell'|'basket'|'pop', count}]
@@ -685,7 +695,7 @@ function Sim(level, objects) {
   this.ground = ground;
 
   this.fans = []; this.springs = []; this.cars = []; this.bells = []; this.targets = []; this.baskets = [];
-  this.balloons = []; this.pins = []; this.conveyors = []; this.cannons = [];
+  this.balloons = []; this.pins = []; this.conveyors = []; this.cannons = []; this.xylos = [];
   const addDyn = (o, b, extra) => { const d = Object.assign({ obj: o, body: b, wind: 1, vis: 1 }, extra || {}); this.dyn.push(d); return d; };
   for (const o of objects) {
     const ang = (o.angle || 0) * DEG, f = o.flip ? -1 : 1;
@@ -745,6 +755,11 @@ function Sim(level, objects) {
         b.createFixture(pl.Circle(V(0, 0.9), 0.42), { friction: 0.3, restitution: 0.3 });
         b.createFixture(pl.Box(0.07, 0.25, V(0, 0.25), 0)); b.createFixture(pl.Box(0.35, 0.04, V(0, 0.04), 0));
         ud.bell = true; b.setUserData(ud); this.bells.push({ obj: o, body: b, ringAt: -10 }); break;
+      }
+      case 'xylo': {
+        const b = world.createBody({ position: V(o.x, o.y), angle: ang });
+        b.createFixture(pl.Box(0.65, 0.15), { friction: 0.3, restitution: 0.35 });
+        ud.xylo = true; b.setUserData(ud); this.xylos.push({ obj: o, body: b, ringAt: -10 }); break;
       }
       case 'basket': {
         const b = world.createBody({ position: V(o.x, o.y) });
@@ -910,6 +925,13 @@ Sim.prototype.step = function () {
     const ua = im.A.getUserData() || {}, ub = im.B.getUserData() || {};
     const o = (ua.kind === 'obj' && im.A.isDynamic() ? ua.obj : null) || (ub.kind === 'obj' && im.B.isDynamic() ? ub.obj : null) || (ua.kind === 'obj' ? ua.obj : null) || (ub.kind === 'obj' ? ub.obj : null);
     if (!o) continue;
+    // 鉄琴：当たった側の速度変化（衝撃量 / 質量）で判定し、強さを音量に使う
+    const xb = ua.xylo ? im.A : ub.xylo ? im.B : null;
+    if (xb) {
+      const other = xb === im.A ? im.B : im.A, xy = this.xylos.find(q => q.body === xb);
+      const dv = other.isDynamic() ? im.n / Math.max(0.05, other.getMass()) : 0;
+      if (xy && dv > XYLO_MIN_DV) { if (t - xy.ringAt > 0.12) { xy.ringAt = t; this.ev('xylo', im.x, im.y, { id: xy.obj.id, note: xy.obj.note || 0, v: Math.min(1, dv / 6) }); } continue; }
+    }
     if (t - o._snd > 0.07) { o._snd = t; this.ev('hit', im.x, im.y, { n: Math.min(3, im.n), mat: (ua.shot || ub.shot) ? 'ironball' : o.type }); }
   }
   // rolling intensity (audio)
@@ -1220,6 +1242,10 @@ function marbleMaterial(tint) {
   if (quality === 'ultra') return new THREE.MeshPhysicalMaterial({ color: new THREE.Color(tint).lerp(new THREE.Color(0xffffff), 0.45), roughness: 0.02, metalness: 0, transmission: 1, thickness: 0.4, ior: 1.5, clearcoat: 1, attenuationColor: new THREE.Color(tint), attenuationDistance: 1.4, envMapIntensity: 1.5, specularIntensity: 1 });
   return new THREE.MeshPhysicalMaterial({ color: tint, roughness: 0.04, metalness: 0.05, transparent: true, opacity: 0.82, clearcoat: 1, clearcoatRoughness: 0.03, envMapIntensity: 1.8 });
 }
+const xyloMats = {};
+function xyloMat(n) { return xyloMats[n] || (xyloMats[n] = new THREE.MeshStandardMaterial({ color: XYLO_NOTES[n].css, metalness: 0.55, roughness: 0.22 })); }
+// 音板の色と長さを、いまの音の高さに合わせる
+function applyXyloNote(o) { const n = o.note || 0, bar = o.anim.bar; if (!bar) return; bar.material = xyloMat(n); bar.scale.x = 1 - n * 0.035; }
 function buildPartMesh(o) {
   const g = new THREE.Group(); const inner = new THREE.Group(); g.add(inner); o.inner = inner; o.anim = {};
   switch (o.type) {
@@ -1323,6 +1349,14 @@ function buildPartMesh(o) {
       bell.add(at(mesh(new THREE.SphereGeometry(0.07, 16, 12), MAT.chrome), 0, -0.78));
       inner.add(bell);
       o.anim = { bell };
+      break;
+    }
+    case 'xylo': {
+      inner.add(at(mesh(rbox(1.3, 0.14, 0.56, 0.04), MAT.wood), 0, -0.08));
+      for (const x of [-0.4, 0.4]) inner.add(at(mesh(new THREE.BoxGeometry(0.1, 0.04, 0.5), MAT.rubber), x, 0.01));
+      const bar = at(mesh(rbox(1.2, 0.08, 0.42, 0.025), MAT.brass), 0, 0.07); inner.add(bar);
+      for (const x of [-0.4, 0.4]) bar.add(at(mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.1, 10), MAT.chrome), x, 0.02));
+      o.anim = { bar }; applyXyloNote(o);
       break;
     }
     case 'basket': case 'toybox': {
@@ -1667,6 +1701,11 @@ const Audio = {
     if (mat === 'superball' && vol > 0.6) this.tone(700, 0.08, 'sine', 0.12, 0, 1100);
   },
   ding() { [1318, 1976, 3640].forEach((f, i) => this.tone(f, 1.8 - i * 0.45, 'sine', [0.28, 0.12, 0.05][i])); },
+  xylo(n, v = 0.6) {
+    const f = XYLO_NOTES[n].f, vol = 0.1 + v * 0.22;
+    this.tone(f, 1.4, 'sine', vol); this.tone(f * 2.76, 0.4, 'sine', vol * 0.32); this.tone(f * 5.4, 0.12, 'sine', vol * 0.12);
+    this.noise(0.03, 3200, 2, 0.12 + v * 0.2);
+  },
   boing() { this.tone(160, 0.32, 'triangle', 0.35, 0, 620); },
   chime() { [1046, 1318, 1568, 2093].forEach((f, i) => this.tone(f, 0.35, 'triangle', 0.16, i * 0.06)); },
   pop() { this.noise(0.18, 2200, 0.8, 0.9, 'highpass'); this.tone(180, 0.1, 'sine', 0.3, 0, 60); },
@@ -1685,7 +1724,11 @@ const ONO = { nice: ['ナイス！', '#ef7aa6'], bell: ['チーン！', '#f5c02f
 const lastOno = {};
 function ono(kind, x, y, scale = 1) {
   const now = performance.now(); if (lastOno[kind] && now - lastOno[kind] < 380) return; lastOno[kind] = now;
-  const [txt, col] = ONO[kind]; const p = worldToScreen(x, y, 0.5); if (DOPA.on) scale *= 1.35;
+  const [txt, col] = ONO[kind]; onoText(txt, col, x, y, scale);
+}
+// 文字と色を直接指定して擬音を出す（鉄琴の音名など。間引きはしない）
+function onoText(txt, col, x, y, scale = 1) {
+  const p = worldToScreen(x, y, 0.5); if (DOPA.on) scale *= 1.35;
   const el = document.createElement('div'); el.className = 'ono'; el.textContent = txt;
   el.style.left = p.x + 'px'; el.style.top = p.y + 'px'; el.style.setProperty('--c', col); el.style.setProperty('--s', scale); el.style.setProperty('--rot', ((Math.random() - 0.5) * 22).toFixed(1) + 'deg');
   $('#fx').appendChild(el); setTimeout(() => el.remove(), 1000);
@@ -1703,6 +1746,11 @@ function playEvent(e, live) {
       break;
     }
     case 'bell': Audio.ding(); FXK.sparks(e.x, e.y, 20); FXK.flash(e.x, e.y, 1.4); ono('bell', e.x, e.y + 0.6, 1.1); break;
+    case 'xylo': {
+      const nt = XYLO_NOTES[e.note || 0]; Audio.xylo(e.note || 0, e.v);
+      FXK.sparks(e.x, e.y + 0.1, 8, (c => [c.r * 3, c.g * 3, c.b * 3])(new THREE.Color(nt.css)), 2.5);
+      onoText('♪' + nt.name, nt.css, e.x, e.y + 0.6, 0.8 + e.v * 0.4); break;
+    }
     case 'spring': Audio.boing(); FXK.dust(e.x, e.y + 0.2, 5); ono('spring', e.x, e.y + 0.5); break;
     case 'star': Audio.chime(); FXK.sparks(e.x, e.y, 26, [4, 3.2, 1], 5); FXK.ring(e.x, e.y); ono('star', e.x, e.y + 0.5, 0.9); break;
     case 'basket': Audio.plop(); FXK.sparks(e.x, e.y, 12, [1.5, 3.5, 2], 3); ono('basket', e.x, e.y + 0.6); break;
@@ -1726,7 +1774,7 @@ function saveBest() { try { localStorage.setItem('toypita-best', JSON.stringify(
 let uid = 1;
 function shake(a) { if (REDUCED) return; G.shakeAmp = Math.max(G.shakeAmp, a); }
 
-function stashLayout() { if (G.level) G.layouts[G.level.id] = G.objects.filter(o => !o.fixed).map(o => ({ type: o.type, x: o.x, y: o.y, angle: o.angle, flip: o.flip })); }
+function stashLayout() { if (G.level) G.layouts[G.level.id] = G.objects.filter(o => !o.fixed).map(o => ({ type: o.type, x: o.x, y: o.y, angle: o.angle, flip: o.flip, note: o.note })); }
 function loadLevel(i, quiet) {
   if (G.mode !== 'edit') stopRun(true);
   stashLayout();
@@ -1813,6 +1861,7 @@ function newPart(type, x, y) {
   if (type === 'plank') o.angle = -15;
   if (type === 'cannon') o.angle = 45;
   if (type === 'pendulum') o.angle = -60;
+  if (type === 'xylo') o.note = G.objects.filter(q => q.type === 'xylo').length % XYLO_NOTES.length;
   G.objects.push(o); buildPartMesh(o); return o;
 }
 function removePart(o) {
@@ -1836,6 +1885,11 @@ function flipSel() {
   const o = G.selected; if (!o || !PARTS[o.type].flip || G.mode !== 'edit') return;
   o.flip = !o.flip; if (!placeable(o, others(o), G.level.terrain)) { o.flip = !o.flip; toast('ここでは向きを変えられません', 1400); }
   syncEditMesh(o); setOutline(o, 0x2f7de1); Audio.click();
+}
+function noteSel(dir) {
+  const o = G.selected; if (!o || o.type !== 'xylo' || G.mode !== 'edit') return;
+  o.note = ((o.note || 0) + dir + XYLO_NOTES.length) % XYLO_NOTES.length;
+  applyXyloNote(o); showSelBar(o); Audio.xylo(o.note, 0.5);
 }
 function findFreeSpot(o) {
   const cands = [];
@@ -1891,6 +1945,7 @@ window.addEventListener('keydown', (e) => {
   if (e.key === 'q' || e.key === 'Q') rotateSel(1);
   else if (e.key === 'e' || e.key === 'E') rotateSel(-1);
   else if (e.key === 'f' || e.key === 'F') flipSel();
+  else if (e.key === 'n' || e.key === 'N') noteSel(e.shiftKey ? -1 : 1);
   else if ((e.key === 'Delete' || e.key === 'Backspace') && G.selected && G.mode === 'edit') removePart(G.selected);
   else if (e.key === ' ') { e.preventDefault(); toggleRun(); }
   else if (e.key === 'Escape') { if (G.mode === 'replay') endReplay(); else select(null); }
@@ -1975,6 +2030,7 @@ function stopRun(silent) {
 function resetAnim(o) {
   if (o.type === 'spring') { o.anim.coil.scale.y = 1; o.anim.top.position.y = 0.13; }
   if (o.type === 'bell') o.anim.bell.rotation.z = 0;
+  if (o.type === 'xylo') o.anim.bar.position.y = 0.07;
   if (o.type === 'cannon') { o.anim.barrel.position.x = CANNON_PIVOT[0]; o.anim.btn.position.y = 0.22; }
 }
 function applyFrame(frame, prevFrame) {
@@ -1996,6 +2052,7 @@ function lastEventT(type, id, t) { let last = -9; for (const e of G.events) { if
 function effectsAt(t) {
   for (const o of G.objects) {
     if (o.type === 'spring') { const dt = t - lastEventT('spring', o.id, t); const k = dt < 1.2 ? Math.exp(-dt * 7) * Math.cos(dt * 34) : 0; o.anim.coil.scale.y = 1 - 0.55 * k; o.anim.top.position.y = 0.13 - 0.12 * k; }
+    else if (o.type === 'xylo') { const dt = t - lastEventT('xylo', o.id, t); o.anim.bar.position.y = 0.07 + (dt < 0.6 ? Math.sin(dt * 90) * 0.012 * Math.exp(-dt * 8) : 0); }
     else if (o.type === 'bell') { const dt = t - lastEventT('bell', o.id, t); o.anim.bell.rotation.z = dt < 3 ? Math.sin(dt * 18) * 0.35 * Math.exp(-dt * 1.6) : 0; }
     else if (o.type === 'cannon') { const dt = t - lastEventT('cannon', o.id, t); o.anim.barrel.position.x = CANNON_PIVOT[0] - (dt < 0.6 ? Math.exp(-dt * 9) * 0.18 : 0); const fz = t - lastEventT('fuse', o.id, t); o.anim.btn.position.y = 0.22 - (fz < 0.4 ? 0.05 : 0); }
     else if (o.type === 'conveyor') { const dir = o.flip ? -1 : 1; o.anim.tex.offset.x = 0.5 - t * CONVEYOR_SPEED / 0.6 * dir; o.anim.rollers.forEach(r => r.rotation.y = -t * CONVEYOR_SPEED / 0.11 * dir); }
@@ -2124,6 +2181,7 @@ const ICONS = {
   balloon: '<svg viewBox="0 0 40 40"><ellipse cx="20" cy="15" rx="9" ry="10.5" fill="#e5483b"/><path d="M20 25.5l-2 2.5h4z" fill="#e5483b"/><path d="M20 28c-2 3 2 5 0 9" stroke="#9fb6c8" stroke-width="1.5" fill="none"/><ellipse cx="16.5" cy="11" rx="2" ry="3" fill="#fff" opacity=".6"/></svg>',
   pin: '<svg viewBox="0 0 40 40"><rect x="11" y="24" width="18" height="5" rx="2.5" fill="#2f7de1"/><path d="M16 24l2-5h4l2 5z" fill="#2f7de1"/><path d="M20 19V6" stroke="#9aa4ae" stroke-width="2.4" stroke-linecap="round"/></svg>',
   bell: '<svg viewBox="0 0 40 40"><path d="M20 6c-6 0-8 6-8 12l-3 8h22l-3-8c0-6-2-12-8-12z" fill="#f0c25a" stroke="#b98a1f" stroke-width="1.5"/><circle cx="20" cy="29" r="2.4" fill="#b98a1f"/><rect x="10" y="33" width="20" height="3" rx="1.5" fill="#e2b47c"/></svg>',
+  xylo: '<svg viewBox="0 0 40 40"><rect x="4" y="25" width="32" height="6" rx="2" fill="#e2b47c" stroke="#a8743c" stroke-width="1.2"/><rect x="6" y="19" width="28" height="5" rx="2" fill="#2fae66"/><circle cx="11" cy="21.5" r="1.1" fill="#fff"/><circle cx="29" cy="21.5" r="1.1" fill="#fff"/><path d="M26 6v8.5" stroke="#1f2b46" stroke-width="2" stroke-linecap="round"/><ellipse cx="23.6" cy="14.6" rx="2.8" ry="2.1" fill="#1f2b46" transform="rotate(-20 23.6 14.6)"/></svg>',
   basket: '<svg viewBox="0 0 40 40"><path d="M7 13h26l-3 20H10z" fill="#2fae66"/><path d="M11 18h18M11 23h17M12 28h16" stroke="#bfe9d1" stroke-width="1.6"/></svg>',
   toybox: '<svg viewBox="0 0 40 40"><rect x="5" y="13" width="30" height="20" rx="3" fill="#f08a2c"/><rect x="5" y="13" width="30" height="5" fill="#f5c02f"/></svg>',
 };
@@ -2183,6 +2241,8 @@ function showSelBar(o) {
   if (G.mode !== 'edit' || !o) return hideSelBar();
   const bar = $('#selbar'); bar.hidden = false;
   $('#rotL').hidden = $('#rotR').hidden = !PARTS[o.type].rot; $('#flipB').hidden = !PARTS[o.type].flip;
+  const nb = $('#noteB'); nb.hidden = o.type !== 'xylo';
+  if (o.type === 'xylo') { const nt = XYLO_NOTES[o.note || 0]; nb.textContent = '♪' + nt.name; nb.style.setProperty('--nc', nt.css); }
   $('#selName').textContent = PARTS[o.type].name + (PARTS[o.type].rot ? ` ${Math.round(o.angle || 0)}°` : '');
   positionSelBar();
 }
@@ -2222,6 +2282,7 @@ $('#runBtn').addEventListener('click', toggleRun);
 $('#rotL').addEventListener('click', () => rotateSel(1));
 $('#rotR').addEventListener('click', () => rotateSel(-1));
 $('#flipB').addEventListener('click', flipSel);
+$('#noteB').addEventListener('click', () => noteSel(1));
 $('#delB').addEventListener('click', () => G.selected && removePart(G.selected));
 $('#stagesBtn').addEventListener('click', openStages);
 $('#stagesClose').addEventListener('click', () => ($('#stages').hidden = true));
@@ -2344,7 +2405,7 @@ const DOPA = {
     } else if (e.type === 'hit') {
       const now = performance.now(); if (e.n > 0.5 && now - this.lastHitPts > 140) { this.lastHitPts = now; this.add(Math.round(10 + e.n * 20), e.x, e.y + 0.3, false); }
     } else {
-      const pts = { bell: 3000, pop: 2500, star: 5000, cannon: 1500, basket: 2000, spring: 500, fuse: 300 }[e.type];
+      const pts = { xylo: 200, bell: 3000, pop: 2500, star: 5000, cannon: 1500, basket: 2000, spring: 500, fuse: 300 }[e.type];
       if (pts) this.add(pts, e.x, e.y + 0.8, true);
     }
   },
