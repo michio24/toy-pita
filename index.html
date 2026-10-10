@@ -1195,12 +1195,13 @@ const room = new THREE.Group(); scene.add(room);
   const boardMat = new THREE.MeshPhysicalMaterial({ map: pb.map, bumpMap: pb.bump, bumpScale: 0.02, roughness: 0.7, clearcoat: 0.15, envMapIntensity: 0.55 });
   room.add(at(mesh(rbox(BOARD.w, BOARD.h, 0.22, 0.04, 0.06), [boardMat, MAT.woodLight], false, true), BOARD.cx, BOARD.cy, BOARD.z));
   const fz = BOARD.z + 0.02, t = 0.42, fw = BOARD.w + t * 2;
-  const bar = (w, h, x, y, c) => room.add(at(mesh(rbox(w, h, 0.5, 0.08, 0.04), plastic(c, 0.28)), x, y, fz));
-  bar(fw, t, 0, BOARD.cy + BOARD.h / 2 + t / 2, COL.red);
+  const railDepth = 1.4, railZ = BOARD.z + railDepth / 2;
+  const bar = (w, h, x, y, c, depth = 0.5, z = fz) => room.add(at(mesh(rbox(w, h, depth, 0.08, 0.04), plastic(c, 0.28)), x, y, z));
+  bar(fw, t, BOARD.cx, STAGE.ymax + t / 2, COL.red, railDepth, railZ);
   bar(fw, t, 0, BOARD.cy - BOARD.h / 2 - t / 2, COL.green);
-  bar(t, BOARD.h, -BOARD.w / 2 - t / 2, BOARD.cy, COL.blue);
-  bar(t, BOARD.h, BOARD.w / 2 + t / 2, BOARD.cy, COL.yellow);
-  [[-1, 1, COL.yellow], [1, 1, COL.blue], [-1, -1, COL.red], [1, -1, COL.green]].forEach(([x, y, c]) => room.add(at(mesh(new THREE.SphereGeometry(0.34, 24, 16), plastic(c, 0.28)), x * (BOARD.w / 2 + t / 2), BOARD.cy + y * (BOARD.h / 2 + t / 2), fz + 0.05)));
+  bar(t, BOARD.h, STAGE.xmin - t / 2, BOARD.cy, COL.blue, railDepth, railZ);
+  bar(t, BOARD.h, STAGE.xmax + t / 2, BOARD.cy, COL.yellow, railDepth, railZ);
+  [[-1, 1, COL.yellow], [1, 1, COL.blue], [-1, -1, COL.red], [1, -1, COL.green]].forEach(([x, y, c]) => room.add(at(mesh(new THREE.SphereGeometry(0.34, 24, 16), plastic(c, 0.28)), x * (BOARD.w / 2 + t / 2), BOARD.cy + y * (BOARD.h / 2 + t / 2), y > 0 ? railZ + railDepth / 2 - 0.34 : fz + 0.05)));
   for (const x of [-6.5, 6.5]) room.add(at(mesh(rbox(1.6, 0.5, 2.0, 0.12), plastic(COL.navy, 0.4)), x, -0.37, BOARD.z - 0.1));
   // desk props outside the play area
   const cup = new THREE.Group(); cup.position.set(-11.6, 0, 1.6); room.add(cup);
