@@ -335,7 +335,8 @@ body.dopa .ono { text-shadow: 0 4px 0 var(--ink), 0 0 18px rgba(255,255,255,.8);
 // ===== トイ・ピタ core v2: parts, levels, geometry, physics (no rendering) =====
 const DEG = Math.PI / 180;
 const DT = 1 / 60;
-const STAGE = { xmin: -8.6, xmax: 8.6, ymin: 0, ymax: 9.6 };
+const BOARD = { w: 18.2, h: 10.2, cx: 0, cy: 5.0, z: -0.72, pitch: 0.5 };
+const STAGE = { xmin: BOARD.cx - BOARD.w / 2, xmax: BOARD.cx + BOARD.w / 2, ymin: BOARD.cy - BOARD.h / 2, ymax: BOARD.cy + BOARD.h / 2 };
 
 // ---------- shape helpers ----------
 const SC = (cx, cy, r) => ({ k: 'c', cx, cy, r });
@@ -389,7 +390,7 @@ const LEVELS = [
       { x: 0.6, y: 0.9, w: 0.6, h: 1.8, c: 'red' },
     ],
     fixed: [
-      { type: 'marble', x: -7.6, y: 7.25, target: true },
+      { type: 'marble', x: -7.6, y: 7.6, target: true },
       { type: 'bell', x: 7.2, y: 0 },
     ],
     inv: { plank: 3 },
@@ -569,10 +570,7 @@ const LEVELS = [
     id: 'sandbox', name: 'サンドボックス', goalText: '自由に装置を作ろう',
     hint: '部品は使い放題。好きな装置を組んで、スタートで動かそう。',
     sandbox: true,
-    terrain: [
-      { x: -5.2, y: 5.6, w: 3.6, h: 0.3, a: -6, c: 'blue' },
-      { x: 4.8, y: 3.4, w: 3.4, h: 0.3, c: 'yellow' },
-    ],
+    terrain: [],
     fixed: [],
     inv: Object.fromEntries(PART_ORDER.map(t => [t, Infinity])),
     goals: [],
@@ -626,7 +624,7 @@ function shapeBounds(s) {
 }
 function placeable(o, others, terrain, m = 0.025) {
   const mine = objShapes(o);
-  for (const s of mine) { const [x0, y0, x1, y1] = shapeBounds(s); if (x0 < STAGE.xmin || x1 > STAGE.xmax || y0 < -0.001 || y1 > STAGE.ymax) return false; }
+  for (const s of mine) { const [x0, y0, x1, y1] = shapeBounds(s); if (x0 < STAGE.xmin || x1 > STAGE.xmax || y0 < STAGE.ymin - 0.001 || y1 > STAGE.ymax) return false; }
   const ts = terrain.map(terrainShape);
   for (const s of mine) for (const t of ts) if (shapesHit(s, t, m)) return false;
   for (const ob of others) { if (ob === o) continue; const os = objShapes(ob); for (const s of mine) for (const t of os) if (shapesHit(s, t, m)) return false; }
@@ -639,7 +637,7 @@ function pointHits(o, x, y, pad = 0.18) {
   }
   return false;
 }
-// Find a valid spot near (o.x,o.y): push up out of collisions; drop-type parts settle onto surfaces.
+// Find a valid spot near (o.x,o.y): push up out of collisions; non-ball drop parts settle onto surfaces.
 function settle(o, others, terrain) {
   const y0 = o.y;
   if (!placeable(o, others, terrain)) {
@@ -649,8 +647,10 @@ function settle(o, others, terrain) {
   }
   if (PARTS[o.type].drop) {
     if (!placeable(o, others, terrain, -0.003)) { for (let i = 0; i < 10 && !placeable(o, others, terrain, -0.003); i++) o.y += 0.005; }
-    for (let i = 0; i < 14; i++) { o.y -= 0.05; if (!placeable(o, others, terrain, -0.003)) { o.y += 0.05; break; } }
-    for (let i = 0; i < 10; i++) { o.y -= 0.005; if (!placeable(o, others, terrain, -0.003)) { o.y += 0.005; break; } }
+    if (!PARTS[o.type].ball) {
+      for (let i = 0; i < 14; i++) { o.y -= 0.05; if (!placeable(o, others, terrain, -0.003)) { o.y += 0.05; break; } }
+      for (let i = 0; i < 10; i++) { o.y -= 0.005; if (!placeable(o, others, terrain, -0.003)) { o.y += 0.005; break; } }
+    }
     // never let a part rest on a ball (it would just roll off and cheat the puzzle)
     const balls = others.filter(b => b !== o && PARTS[b.type].ball);
     if (balls.length) { o.y -= 0.03; const onBall = !placeable(o, balls, [], -0.003); o.y += 0.03; if (onBall) { o.y = y0; return false; } }
@@ -676,7 +676,7 @@ function Sim(level, objects) {
   for (const o of objects) o._snd = -1;
   const self = this;
   const ground = world.createBody(); ground.setUserData({ kind: 'terrain' });
-  ground.createFixture(pl.Box(20, 1, V(0, -1)), { friction: 0.6 });
+  ground.createFixture(pl.Box(20, 1, V(0, STAGE.ymin - 1)), { friction: 0.6 });
   ground.createFixture(pl.Box(0.5, 20, V(STAGE.xmin - 0.5, 10)), { friction: 0.3 });
   ground.createFixture(pl.Box(0.5, 20, V(STAGE.xmax + 0.5, 10)), { friction: 0.3 });
   ground.createFixture(pl.Box(20, 0.5, V(0, STAGE.ymax + 0.5)), { friction: 0.3 });
@@ -1053,7 +1053,6 @@ TEX.desk.repeat.set(6, 2);
 TEX.noise.repeat.set(3, 3);
 
 // pegboard: birch plywood with a grid of holes
-const BOARD = { w: 18.2, h: 10.2, cx: 0, cy: 5.0, z: -0.72, pitch: 0.5 };
 function pegboardTextures() {
   const W = 2048, H = Math.round(W * BOARD.h / BOARD.w), ppu = W / BOARD.w;
   const holes = (g, fill, rim) => {
@@ -1838,7 +1837,7 @@ function flipSel() {
 }
 function findFreeSpot(o) {
   const cands = [];
-  for (let y = 7.5; y >= 1; y -= 0.5) for (let x = -1; x <= 7; x += 0.5) cands.push([x, y], [-x, y]);
+  for (let y = STAGE.ymax - 0.25; y >= STAGE.ymin + 0.25; y -= 0.5) for (let x = 0; x <= STAGE.xmax - 0.25; x += 0.5) cands.push([x, y], [-x, y]);
   for (const [x, y] of cands) { o.x = x; o.y = y; if (placeable(o, others(o), G.level.terrain) && settle(o, others(o), G.level.terrain)) return true; }
   return false;
 }
