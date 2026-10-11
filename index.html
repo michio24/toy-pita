@@ -80,6 +80,7 @@ button:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
 .part:disabled { opacity: .38; cursor: default; }
 .part .ico svg { width: 40px; height: 40px; display: block; }
 .pname { font-size: 11px; font-weight: 800; white-space: nowrap; }
+.part.gimmick { width: auto; min-width: 78px; padding-inline: 8px; }
 .cnt { position: absolute; top: 3px; right: 5px; font-size: 11px; font-weight: 900; color: var(--blue); font-variant-numeric: tabular-nums; }
 .actions { display: flex; gap: 8px; align-items: flex-end; }
 .sbtn { height: 44px; padding: 0 14px; border: 0; border-radius: 14px; background: var(--panel); box-shadow: 0 4px 0 var(--panel-edge); font-weight: 800; font-size: 13px; white-space: nowrap; }
@@ -183,7 +184,7 @@ button:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
   .obj { font-size: 11px; padding: 5px 8px; }
   .stagebox { flex: 1; }
   #goalText { font-size: 11.5px; }
-  .part { width: 64px; } .part .ico svg { width: 32px; height: 32px; } .pname { font-size: 10px; }
+  .part { width: 64px; } .part.gimmick { min-width: 64px; } .part .ico svg { width: 32px; height: 32px; } .pname { font-size: 10px; }
   .bigbtn { min-width: 0; height: 58px; padding: 0 16px; font-size: 16px; }
   .bigbtn span { display: none; }
   .bigbtn svg { width: 28px; height: 28px; }
@@ -205,7 +206,7 @@ button:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
   #qualityLbl { display: none; }
   #tray { padding-top: 6px; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 8px); gap: 8px; }
   #parts { padding: 6px; border-radius: 16px; gap: 6px; }
-  .part { width: 54px; padding: 4px 2px; } .part .ico svg { width: 28px; height: 28px; } .pname { display: none; }
+  .part { width: 54px; padding: 4px 2px; } .part.gimmick { min-width: 54px; padding-inline: 2px; } .part .ico svg { width: 28px; height: 28px; } .pname { display: none; }
   .bigbtn { height: 50px; min-width: 0; padding: 0 14px; font-size: 15px; }
   .bigbtn span { display: none; }
   .sbtn { height: 38px; padding: 0 10px; font-size: 12px; }
@@ -366,6 +367,11 @@ const CANNON_PIVOT = [0, 0.12];
 // Part definitions. fp = footprint in local coords (used for placement overlap tests).
 // selfRot: fp(o) already accounts for o.angle (the part does not rotate as a whole).
 const PARTS = {
+  splitter:  { name: 'カタカタ分岐器', flip: true, tip: '上から玉を入れると、左右交互に送り出します。反転で最初の出口を変更。', fp: () => [SB(0, -0.05, 2.3, 1.65)] },
+  lift:      { name: 'バケツリフト', tip: '重さで反対のバケツを持ち上げます。上端で外側の扉が開き、玉を横へ送り出します。出口に板やベルを置こう。', fp: () => [SB(0, 1.1, 0.28, 0.2), ...[-1, 1].flatMap((s, i) => { const y = i ? -1.4 : 0.2; return [SB(s * 0.86, y, 0.88, 0.14), SB(s * 0.86 - 0.395, y + 0.23, 0.11, 0.46), SB(s * 0.86 + 0.395, y + 0.23, 0.11, 0.46)]; }), SB(-1.25, -0.42, 0.12, 2.85), SB(1.25, -0.42, 0.12, 2.85)] },
+  wheel:     { name: '水車・羽根車', tip: '玉を羽根に落とすか、上半分に風を当てると回ります。羽根で別の玉を押せます。', fp: () => [SC(0, 0, 1.0)] },
+  hammer:    { name: '回転ハンマー', flip: true, tip: '赤いスイッチに玉が当たると一回転。頭で扇風機や大砲を叩くと起動します。反転で打つ方向を変更。', fp: () => [SC(0, 0, 0.21), SB(0.45 * Math.cos(1.4), 0.45 * Math.sin(1.4), 0.94, 0.11, 1.4 / DEG), SB(0.94 * Math.cos(1.4), 0.94 * Math.sin(1.4), 0.34, 0.54, 1.4 / DEG), SB(-1.35, -0.38, 0.4, 0.7)] },
+  bubbler:   { name: 'シャボン玉メーカー', flip: true, tip: '輪っかに扇風機の風を当てるとシャボン玉が出ます。物に触れると割れます。', fp: () => [SB(0, -0.28, 0.8, 0.9), SC(0.32, 0.43, 0.29)] },
   marble:    { name: 'ビー玉', drop: true, ball: true, fp: () => [SC(0, 0, 0.25)] },
   superball: { name: 'スーパーボール', drop: true, ball: true, fp: () => [SC(0, 0, 0.22)] },
   ironball:  { name: '鉄球', drop: true, ball: true, fp: () => [SC(0, 0, 0.3)] },
@@ -391,7 +397,7 @@ const PARTS = {
   cannon:    { name: '大砲', rot: true, flip: true, selfRot: true, rotMin: -30, rotMax: 75,
                fp: (o) => { const a = (o.angle || 0) * DEG; const [bx, by] = rotP(0.3, 0, a); return [SB(-0.05, -0.2, 0.9, 0.44), SB(CANNON_PIVOT[0] + bx, CANNON_PIVOT[1] + by, 0.85, 0.34, o.angle || 0)]; } },
 };
-const PART_ORDER = ['marble', 'superball', 'ironball', 'domino', 'block', 'plank', 'curve', 'spring', 'conveyor', 'fan', 'seesaw', 'pendulum', 'cannon', 'car', 'balloon', 'pin', 'bell', 'xylo', 'drum', 'whistle', 'basket', 'toybox'];
+const PART_ORDER = ['marble', 'superball', 'ironball', 'domino', 'block', 'plank', 'curve', 'spring', 'conveyor', 'fan', 'seesaw', 'pendulum', 'cannon', 'car', 'balloon', 'pin', 'bell', 'xylo', 'drum', 'whistle', 'basket', 'toybox', 'splitter', 'lift', 'wheel', 'hammer', 'bubbler'];
 // 鉄琴の音階：ペンタトニック（ド レ ミ ソ ラ）なので、どの順に鳴っても濁らない
 const XYLO_NOTES = [
   { name: 'ド', f: 523.25, css: '#e5483b' }, { name: 'レ', f: 587.33, css: '#f08a2c' }, { name: 'ミ', f: 659.26, css: '#f5c02f' },
@@ -811,11 +817,71 @@ function Sim(level, objects) {
 
   this.fans = []; this.springs = []; this.cars = []; this.bells = []; this.targets = []; this.baskets = [];
   this.balloons = []; this.pins = []; this.conveyors = []; this.cannons = []; this.instr = []; this.whistles = [];
+  this.splitters = []; this.lifts = []; this.wheels = []; this.hammers = []; this.bubblers = []; this.bubbles = [];
   const addDyn = (o, b, extra) => { const d = Object.assign({ obj: o, body: b, wind: 1, vis: 1 }, extra || {}); this.dyn.push(d); return d; };
   for (const o of objects) {
     const ang = (o.angle || 0) * DEG, f = o.flip ? -1 : 1;
     const ud = { kind: 'obj', obj: o };
     switch (o.type) {
+      case 'splitter': {
+        const b = world.createBody({ position: V(o.x, o.y) }); b.setUserData(ud);
+        for (const s of [-1, 1]) {
+          b.createFixture(pl.Box(0.07, 0.32, V(s * 0.43, 0.47)), { friction: 0.15 });
+          b.createFixture(pl.Box(0.56, 0.07, V(s * 0.62, -0.43), s * -0.35), { friction: 0.12 });
+        }
+        b.createFixture(pl.Box(0.33, 0.12, V(0, 0.25)), { isSensor: true }).setUserData('splitter');
+        const gate = world.createBody({ type: 'kinematic', position: V(o.x, o.y - 0.1), angle: -f * 0.4 });
+        addDyn(o, gate, { part: 'gate', wind: 0 });
+        this.splitters.push({ obj: o, body: b, gate, next: -f, seen: new Set() }); break;
+      }
+      case 'lift': {
+        const b = world.createBody({ position: V(o.x, o.y) }); b.setUserData(ud);
+        // 横梁は背面の支持材。バケツへ落ちる玉の入口をふさがない。
+        b.createFixture(pl.Box(0.14, 0.1, V(0, 1.1)));
+        const gates = [];
+        const buckets = [-1, 1].map((side, i) => {
+          const p = world.createBody({ type: 'kinematic', position: V(o.x + side * 0.86, o.y - 0.6 + (i ? -0.8 : 0.8)) });
+          p.createFixture(pl.Box(0.44, 0.07), { friction: 0.65 });
+          p.createFixture(pl.Box(0.055, 0.23, V(-side * 0.395, 0.23)), { friction: 0.3 });
+          const gate = world.createBody({ type: 'kinematic', position: V(o.x + side * 1.255, p.getPosition().y) });
+          gate.createFixture(pl.Box(0.055, 0.23, V(0, 0.23)), { friction: 0.3 }); gate.setUserData(ud);
+          gates.push(gate); addDyn(o, gate, { part: i ? 'liftGateR' : 'liftGateL', wind: 0 });
+          p.setUserData(ud); addDyn(o, p, { part: i ? 'bucketR' : 'bucketL', wind: 0 }); return p;
+        });
+        this.lifts.push({ obj: o, buckets, gates, q: 0.8, speed: 0, raised: [false, false], open: [0, 0], unloading: [false, false] }); break;
+      }
+      case 'wheel': {
+        const base = world.createBody({ position: V(o.x, o.y) }); base.setUserData(ud);
+        const b = world.createBody({ type: 'dynamic', position: V(o.x, o.y), angularDamping: 0.65 });
+        b.createFixture(pl.Circle(0.18), { density: 2 });
+        for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; b.createFixture(pl.Box(0.34, 0.09, V(Math.cos(a) * 0.61, Math.sin(a) * 0.61), a), { density: 0.6, friction: 0.5, restitution: 0.08 }); }
+        b.setUserData(ud); world.createJoint(pl.RevoluteJoint({}, base, b, V(o.x, o.y)));
+        addDyn(o, b, { part: 'rotor', wind: 0 }); this.wheels.push({ obj: o, body: b }); break;
+      }
+      case 'hammer': {
+        const b = world.createBody({ position: V(o.x, o.y) }); b.setUserData(ud);
+        b.createFixture(pl.Circle(0.15));
+        b.createFixture(pl.Box(0.2, 0.21, V(-f * 1.35, -0.5)), { friction: 0.4 });
+        b.createFixture(pl.Box(0.19, 0.065, V(-f * 1.35, -0.12)), { friction: 0.4 }).setUserData('hammerSwitch');
+        const arm = world.createBody({ type: 'kinematic', position: V(o.x, o.y), angle: f * 1.4 });
+        arm.createFixture(pl.Box(0.45, 0.055, V(f * 0.45, 0)), { friction: 0.4 });
+        arm.createFixture(pl.Box(0.17, 0.27, V(f * 0.94, 0)), { friction: 0.4, restitution: 0.25 });
+        arm.setUserData(ud); addDyn(o, arm, { part: 'arm', wind: 0 });
+        this.hammers.push({ obj: o, body: b, arm, dir: f, until: -1, fired: false }); break;
+      }
+      case 'bubbler': {
+        const b = world.createBody({ position: V(o.x, o.y) }); b.setUserData(ud);
+        b.createFixture(pl.Box(0.4, 0.45, V(0, -0.28)), { friction: 0.4 });
+        const pool = [];
+        for (let i = 0; i < 12; i++) {
+          const p = world.createBody({ type: 'dynamic', position: V(o.x, o.y), active: false, linearDamping: 0.8, gravityScale: 0 });
+          const r = 0.18 + (i % 3) * 0.035;
+          p.createFixture(pl.Circle(r), { density: 0.01, isSensor: true }); p.setUserData({ kind: 'obj', obj: o, bubble: true });
+          p.setActive(false); const d = addDyn(o, p, { part: 'bubble' + i, wind: 2.8, vis: 0, r });
+          const bubble = { obj: o, body: p, d, born: -1 }; pool.push(bubble); this.bubbles.push(bubble);
+        }
+        this.bubblers.push({ obj: o, body: b, pool, nextAt: 0 }); break;
+      }
       case 'marble': case 'superball': case 'ironball': {
         const spec = { marble: [0.25, 1.1, 0.12, 0.25, 1], superball: [0.22, 0.9, 0.5, 0.86, 1.1], ironball: [0.3, 7.5, 0.2, 0.04, 0.12] }[o.type];
         const b = world.createBody({ type: 'dynamic', position: V(o.x, o.y), bullet: true, angularDamping: 0.05 });
@@ -986,12 +1052,71 @@ Sim.prototype.windAt = function (fan, x, y) {
 Sim.prototype.windBlocked = function (fan, w) {
   let hit = false; const V = planck.Vec2;
   this.world.rayCast(V(fan.obj.x + fan.dx * 0.3, fan.obj.y + fan.dy * 0.3), V(w.obj.x, w.obj.y), fx => {
-    const b = fx.getBody(); if (b === w.body || !b.isDynamic()) return -1; hit = true; return 0;
+    const b = fx.getBody(); if (b === w.body || !b.isDynamic() || (b.getUserData() || {}).bubble) return -1; hit = true; return 0;
   });
   return hit;
 };
 Sim.prototype.preStep = function () {
   const V = planck.Vec2;
+  for (const lift of this.lifts) {
+    const loads = lift.buckets.map(b => {
+      let mass = 0; const counted = new Set();
+      for (let ce = b.getContactList(); ce; ce = ce.next) {
+        if (!ce.contact.isTouching() || !ce.other.isDynamic() || counted.has(ce.other)) continue;
+        const p = ce.other.getPosition(), q = b.getPosition();
+        if (p.y > q.y && Math.abs(p.x - q.x) < 0.6) { counted.add(ce.other); mass += ce.other.getMass(); }
+      }
+      return mass;
+    });
+    lift.speed = Math.max(-1.3, Math.min(1.3, (lift.speed + (loads[1] - loads[0]) * DT * 9) * 0.985));
+    const next = Math.max(-0.8, Math.min(0.8, lift.q + lift.speed * DT)), speed = (next - lift.q) / DT;
+    lift.q = next; if (Math.abs(speed) < 0.00001) lift.speed = 0;
+    lift.buckets[0].setLinearVelocity(V(0, speed)); lift.buckets[1].setLinearVelocity(V(0, -speed));
+    lift.buckets.forEach((bucket, i) => {
+      const side = i ? 1 : -1, velocity = i ? -speed : speed;
+      if (velocity > 0.01) lift.raised[i] = true;
+      const atTop = i ? next <= -0.8 + 1e-6 : next >= 0.8 - 1e-6;
+      if (!atTop) lift.unloading[i] = false;
+      else if (lift.raised[i] && !lift.unloading[i]) {
+        lift.unloading[i] = true; lift.raised[i] = false;
+        this.ev('liftUnload', bucket.getPosition().x, lift.obj.y + 0.45, { id: lift.obj.id, side });
+      }
+      lift.open[i] = Math.max(0, Math.min(1, lift.open[i] + (lift.unloading[i] ? 1 : -1) * DT * 4));
+      const p = bucket.getPosition(), gate = lift.gates[i];
+      gate.setPosition(V(p.x + side * 0.395, p.y)); gate.setLinearVelocity(V(0, velocity)); gate.setAngle(-side * lift.open[i] * 1.75);
+      if (lift.open[i] < 0.9) return;
+      // 排出板に相当する小さな力で、玉や積み木を開いた扉へ送る。
+      for (const d of this.dyn) {
+        if (!d.vis || !d.body.isDynamic() || (d.body.getUserData() || {}).bubble) continue;
+        const q = d.body.getPosition();
+        if (Math.abs(q.x - p.x) < 0.5 && q.y > p.y + 0.07 && q.y < p.y + 0.9 && d.body.getLinearVelocity().x * side < 1.8) d.body.applyForceToCenter(V(side * d.body.getMass() * 9, 0), true);
+      }
+    });
+  }
+  for (const wheel of this.wheels) {
+    for (const fan of this.fans) {
+      const k = this.windAt(fan, wheel.obj.x, wheel.obj.y + 0.65);
+      if (k && !this.windBlocked(fan, wheel)) wheel.body.applyTorque(-fan.dx * k * 0.65, true);
+    }
+    wheel.body.setAngularVelocity(Math.max(-9, Math.min(9, wheel.body.getAngularVelocity())));
+  }
+  for (const h of this.hammers) {
+    h.arm.setAngularVelocity(h.until > this.t ? -h.dir * Math.PI * 2 / 0.85 : 0);
+    if (h.fired && h.until <= this.t) h.arm.setAngle(h.dir * 1.4);
+  }
+  for (const maker of this.bubblers) {
+    const x = maker.obj.x + (maker.obj.flip ? -0.32 : 0.32), y = maker.obj.y + 0.43;
+    const fan = this.fans.find(f => this.windAt(f, x, y) > 0 && !this.windBlocked(f, maker));
+    if (!fan || this.t < maker.nextAt) continue;
+    const bubble = maker.pool.find(b => !b.d.vis); if (!bubble) continue;
+    maker.nextAt = this.t + 0.65; bubble.born = this.t; bubble.d.vis = 1;
+    bubble.body.setPosition(V(x + fan.dx * 0.45, y + fan.dy * 0.45)); bubble.body.setLinearVelocity(V(fan.dx * 0.9, 0.55 + fan.dy * 0.9)); bubble.body.setActive(true);
+    this.ev('bubble', x, y, { id: maker.obj.id });
+  }
+  for (const bubble of this.bubbles) if (bubble.d.vis) {
+    bubble.body.applyForceToCenter(V(Math.sin(this.t * 2.5 + bubble.d.r * 40) * bubble.body.getMass() * 0.3, bubble.body.getMass() * 0.65), true);
+    if (this.t - bubble.born > 6) { const p = bubble.body.getPosition(); bubble.d.vis = 0; bubble.body.setActive(false); this.ev('bubblePop', p.x, p.y, { id: bubble.obj.id }); }
+  }
   for (const fan of this.fans) {
     if (!fan.on) continue;
     const o = fan.obj, fx = o.x + fan.dx * 0.3, fy = o.y + fan.dy * 0.3;
@@ -1028,7 +1153,27 @@ Sim.prototype.step = function () {
   this.world.step(DT, 10, 4);
   this.t += DT; this.frame++;
   const t = this.t, V = planck.Vec2;
-  for (const { A, B, ua, ub, vn } of this.pending) {
+  for (const { A, B, ua, ub, vn, c } of this.pending) {
+    for (const [me, other, um, fixture] of [[A, B, ua, c.getFixtureA()], [B, A, ub, c.getFixtureB()]]) {
+      const ou = other.getUserData() || {};
+      if (um.bubble && !ou.bubble && ou.obj !== um.obj) {
+        const bubble = this.bubbles.find(b => b.body === me);
+        if (bubble && bubble.d.vis) { bubble.d.vis = 0; const p = me.getPosition(); this.ev('bubblePop', p.x, p.y, { id: um.obj.id }); }
+      }
+      if (fixture.getUserData() === 'splitter' && (ou.shot || (ou.obj && PARTS[ou.obj.type].ball))) {
+        const sp = this.splitters.find(s => s.body === me);
+        if (!sp.seen.has(other)) {
+          sp.seen.add(other); const dir = sp.next; sp.next *= -1; sp.gate.setAngle(-dir * 0.4);
+          other.setPosition(V(sp.obj.x + dir * 0.48, sp.obj.y - 0.04)); other.setLinearVelocity(V(dir * 2.4, -1.4));
+          this.ev('split', sp.obj.x, sp.obj.y, { id: sp.obj.id, dir });
+        }
+      }
+      if (fixture.getUserData() === 'hammerSwitch' && other.isDynamic() && !ou.bubble && ou.obj !== um.obj) {
+        const h = this.hammers.find(h => h.body === me);
+        if (!h.fired) { h.fired = true; h.until = t + 0.85; this.ev('hammer', h.obj.x, h.obj.y, { id: h.obj.id }); }
+      }
+    }
+    if (ua.bubble || ub.bubble) continue;
     if (ua.kind === 'obj' && ub.kind === 'obj' && ua.obj !== ub.obj) {
       const k = [ua.obj.id, ub.obj.id].sort().join('|');
       if (!this.chainPairs.has(k)) { this.chainPairs.add(k); const p = B.getPosition(); this.ev('chain', p.x, p.y, { n: this.chainPairs.size }); }
@@ -1064,7 +1209,26 @@ Sim.prototype.step = function () {
       }
     }
   }
+  // Kinematic なハンマーと固定部品の組は接触イベントが発生しないため、
+  // 回転中の頭だけを既存の形状判定で調べる。軸・柄や静止中の重なりでは起動しない。
+  for (const h of this.hammers) {
+    if (!h.fired || h.until <= t || Math.abs(h.arm.getAngularVelocity()) * 0.94 <= FAN_SWITCH_V) continue;
+    const p = h.arm.getPosition(), a = h.arm.getAngle();
+    const head = shapeWorld(SB(h.dir * 0.94, 0, 0.34, 0.54), { x: p.x, y: p.y, c: Math.cos(a), s: Math.sin(a), f: 1 });
+    for (const target of [...this.fans.filter(f => !f.on), ...this.cannons.filter(c => !c.fired)]) {
+      if (!objShapes(target.obj).some(shape => shapesHit(head, shape, 0))) continue;
+      const key = [h.obj.id, target.obj.id].sort().join('|');
+      if (!this.chainPairs.has(key)) { this.chainPairs.add(key); this.ev('chain', target.obj.x, target.obj.y, { n: this.chainPairs.size }); }
+      if (target.obj.type === 'fan') {
+        target.on = true; this.ev('fanSwitch', target.obj.x, target.obj.y + 0.6, { id: target.obj.id, on: true });
+      } else {
+        target.fired = true; target.fireAt = t + 0.25; this.ev('fuse', target.obj.x, target.obj.y + 0.3, { id: target.obj.id });
+      }
+    }
+  }
   // deferred: popped balloons, cannon shots
+  for (const bubble of this.bubbles) if (!bubble.d.vis && bubble.body.isActive()) bubble.body.setActive(false);
+  for (const sp of this.splitters) for (const b of sp.seen) { const p = b.getPosition(); if (Math.abs(p.x - sp.obj.x) > 1.3 || Math.abs(p.y - sp.obj.y) > 1.2) sp.seen.delete(b); }
   for (const bl of this.balloons) if (bl.popped && bl.body.isActive()) bl.body.setActive(false);
   for (const cn of this.cannons) if (cn.fired && cn.fireAt > 0 && t >= cn.fireAt) {
     cn.fireAt = -1; cn.shot.setActive(true); cn.d.vis = 1; cn.shot.setPosition(V(cn.mx, cn.my));
@@ -1428,9 +1592,109 @@ const xyloMats = {};
 function xyloMat(n) { return xyloMats[n] || (xyloMats[n] = new THREE.MeshStandardMaterial({ color: XYLO_NOTES[n].css, metalness: 0.55, roughness: 0.22 })); }
 // 音板の色と長さを、いまの音の高さに合わせる
 function applyXyloNote(o) { const n = o.note || 0, bar = o.anim.bar; if (!bar) return; bar.material = xyloMat(n); bar.scale.x = 1 - n * 0.035; }
+// 新しいからくりは、木のフレーム・真鍮の軸・色分けした可動部で仕組みを見せる。
+const BUBBLE_MAT = new THREE.MeshPhysicalMaterial({ color: 0xe5faff, transparent: true, opacity: 0.3, roughness: 0.06, metalness: 0.12, clearcoat: 1, iridescence: 1, iridescenceIOR: 1.33, iridescenceThicknessRange: [100, 450], side: THREE.DoubleSide, depthWrite: false });
+function toyBolt(parent, x, y, z = 0.3) {
+  const bolt = at(mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.055, 16), MAT.brass), x, y, z); bolt.rotation.x = Math.PI / 2; parent.add(bolt);
+  parent.add(at(mesh(new THREE.BoxGeometry(0.065, 0.012, 0.008), MAT.dark, false), x, y, z + 0.033));
+}
+function toyLabel(parent, text, x, y, w, color = '#1f2b46') {
+  const tex = canvasTex(256, 64, (ctx, width, height) => { ctx.fillStyle = '#fff6df'; ctx.fillRect(0, 0, width, height); ctx.fillStyle = color; ctx.font = 'bold 32px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, width / 2, height / 2); });
+  const label = at(mesh(new THREE.PlaneGeometry(w, w / 4), new THREE.MeshBasicMaterial({ map: tex }), false, false), x, y, 0.43);
+  parent.add(label); return label;
+}
+function liftRope(parent, x) {
+  const rope = at(mesh(new THREE.CylinderGeometry(0.022, 0.022, 1, 10), MAT.woodLight), x, 0, 0.05); parent.add(rope); return rope;
+}
 function buildPartMesh(o) {
   const g = new THREE.Group(); const inner = new THREE.Group(); g.add(inner); o.inner = inner; o.anim = {};
   switch (o.type) {
+    case 'splitter': {
+      for (const side of [-1, 1]) {
+        inner.add(at(mesh(rbox(0.15, 0.66, 0.55, 0.025), MAT.woodLight), side * 0.43, 0.47));
+        const rail = at(mesh(rbox(1.12, 0.14, 0.62, 0.025), plastic(side < 0 ? COL.blue : COL.orange, 0.25)), side * 0.62, -0.43); rail.rotation.z = side * -0.35; inner.add(rail);
+        const lip = at(mesh(rbox(1.12, 0.23, 0.025, 0.009), MAT.acrylic), side * 0.62, -0.33, 0.32); lip.rotation.z = side * -0.35; inner.add(lip);
+        toyBolt(inner, side * 0.43, 0.66); toyLabel(inner, side < 0 ? '←' : '→', side * 0.83, -0.54, 0.3, side < 0 ? '#2f7de1' : '#f08a2c');
+      }
+      inner.add(at(mesh(rbox(0.72, 0.32, 0.15, 0.035), MAT.wood), 0, -0.11, -0.25));
+      const gate = new THREE.Group(); gate.position.y = -0.1; inner.add(gate);
+      gate.add(mesh(rbox(0.7, 0.12, 0.4, 0.028), plastic(COL.red, 0.25))); toyBolt(gate, 0, 0, 0.24);
+      o.anim = { gate }; break;
+    }
+    case 'lift': {
+      inner.add(at(mesh(rbox(2.6, 0.2, 0.22, 0.045), MAT.wood), 0, 1.1, -0.38));
+      for (const x of [-1.25, 1.25]) { inner.add(at(mesh(rbox(0.12, 2.85, 0.2, 0.025), MAT.woodLight), x, -0.42, -0.28)); toyBolt(inner, x, 1.1, 0.12); }
+      const pulleys = [], ropes = [], buckets = [], gates = [];
+      const ropePath = new THREE.CurvePath();
+      const arc = (cx, start, end) => new THREE.CatmullRomCurve3(Array.from({ length: 9 }, (_, i) => { const a = start + (end - start) * i / 8; return new THREE.Vector3(cx + Math.cos(a) * 0.15, 0.99 + Math.sin(a) * 0.15, 0.05); }));
+      ropePath.add(arc(-0.71, Math.PI, Math.PI / 2));
+      ropePath.add(new THREE.LineCurve3(new THREE.Vector3(-0.71, 1.14, 0.05), new THREE.Vector3(0.71, 1.14, 0.05)));
+      ropePath.add(arc(0.71, Math.PI / 2, 0));
+      inner.add(mesh(new THREE.TubeGeometry(ropePath, 64, 0.022, 8, false), MAT.woodLight));
+      for (let i = 0; i < 2; i++) {
+        const x = i ? 0.86 : -0.86;
+        const axleX = i ? 0.71 : -0.71;
+        const pulley = at(mesh(new THREE.TorusGeometry(0.15, 0.032, 10, 28), MAT.brass), axleX, 0.99, 0); inner.add(pulley); pulleys.push(pulley);
+        pulley.add(mesh(new THREE.BoxGeometry(0.26, 0.035, 0.05), MAT.chrome)); toyBolt(inner, axleX, 0.99, 0.12);
+        ropes.push(liftRope(inner, x));
+        const bucket = new THREE.Group(); inner.add(bucket); buckets.push(bucket);
+        const color = i ? COL.blue : COL.red;
+        bucket.add(mesh(rbox(0.88, 0.14, 0.65, 0.03), plastic(color, 0.25)));
+        const side = i ? 1 : -1;
+        bucket.add(at(mesh(rbox(0.11, 0.46, 0.65, 0.025), plastic(color, 0.25)), -side * 0.395, 0.23));
+        const gate = new THREE.Group(); inner.add(gate); gates.push(gate);
+        gate.add(at(mesh(rbox(0.11, 0.46, 0.65, 0.025), plastic(color, 0.25)), 0, 0.23));
+        toyBolt(gate, 0, 0, 0.36);
+        bucket.add(at(mesh(rbox(0.73, 0.38, 0.025, 0.009), MAT.acrylic), 0, 0.22, 0.33));
+        const handle = at(mesh(new THREE.TorusGeometry(0.34, 0.022, 8, 24, Math.PI), MAT.chrome), 0, 0.43, 0.05); bucket.add(handle);
+        toyLabel(bucket, i ? '↑ →' : '← ↑', 0, 0.16, 0.42, i ? '#2f7de1' : '#e5483b');
+      }
+      o.anim = { bucketL: buckets[0], bucketR: buckets[1], liftGateL: gates[0], liftGateR: gates[1], ropes, pulleys }; break;
+    }
+    case 'wheel': {
+      inner.add(at(mesh(rbox(0.45, 0.65, 0.22, 0.04), MAT.wood), 0, -0.13, -0.32));
+      const rotor = new THREE.Group(); inner.add(rotor);
+      for (const z of [-0.23, 0.23]) rotor.add(at(mesh(new THREE.TorusGeometry(0.69, 0.035, 8, 48), MAT.brass), 0, 0, z));
+      for (let i = 0; i < 8; i++) {
+        const spoke = new THREE.Group(); spoke.rotation.z = i * Math.PI / 4; rotor.add(spoke);
+        spoke.add(at(mesh(rbox(0.75, 0.07, 0.09, 0.018), MAT.woodLight), 0.4, 0));
+        spoke.add(at(mesh(rbox(0.68, 0.18, 0.6, 0.03), plastic([COL.blue, COL.green, COL.yellow, COL.orange][i % 4], 0.28)), 0.61, 0));
+        toyBolt(spoke, 0.64, 0, 0.33);
+      }
+      rotor.add(mesh(new THREE.TorusGeometry(0.2, 0.06, 10, 28), MAT.wood)); toyBolt(inner, 0, 0, 0.4);
+      o.anim = { rotor }; break;
+    }
+    case 'hammer': {
+      inner.add(at(mesh(rbox(1.72, 0.12, 0.16, 0.025), MAT.wood), -0.68, -0.5, -0.31));
+      const linkage = new THREE.CatmullRomCurve3([new THREE.Vector3(-1.18, -0.23, -0.12), new THREE.Vector3(-0.78, -0.23, -0.12), new THREE.Vector3(-0.25, -0.08, -0.12)]);
+      inner.add(mesh(new THREE.TubeGeometry(linkage, 24, 0.025, 8, false), MAT.brass));
+      inner.add(at(mesh(rbox(0.42, 0.54, 0.3, 0.055), MAT.wood), 0, 0, -0.22));
+      const arm = new THREE.Group(); inner.add(arm);
+      arm.add(at(mesh(rbox(0.94, 0.11, 0.22, 0.025), MAT.woodLight), 0.45, 0));
+      arm.add(at(mesh(rbox(0.34, 0.54, 0.48, 0.055), plastic(COL.yellow, 0.22)), 0.94, 0));
+      for (const y of [-0.24, 0.24]) arm.add(at(mesh(rbox(0.37, 0.09, 0.51, 0.025), MAT.rubber), 0.94, y));
+      toyBolt(arm, 0.94, 0, 0.27); toyBolt(inner, 0, 0, 0.28);
+      inner.add(at(mesh(rbox(0.4, 0.42, 0.46, 0.055), plastic(COL.navy, 0.35)), -1.35, -0.5));
+      const button = at(mesh(rbox(0.38, 0.13, 0.44, 0.035), plastic(COL.red, 0.22)), -1.35, -0.12); inner.add(button);
+      toyLabel(inner, '↻', -1.35, -0.5, 0.3); o.anim = { arm, button }; break;
+    }
+    case 'bubbler': {
+      inner.add(at(mesh(rbox(0.8, 0.9, 0.64, 0.09), plastic(COL.green, 0.22)), 0, -0.28));
+      inner.add(at(mesh(rbox(0.72, 0.12, 0.69, 0.035), plastic(COL.yellow, 0.25)), 0, 0.12));
+      inner.add(at(mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.32, 12), MAT.chrome), 0.32, 0.22));
+      inner.add(at(mesh(new THREE.TorusGeometry(0.24, 0.04, 10, 36), plastic(COL.pink, 0.22)), 0.32, 0.43));
+      inner.add(at(mesh(new THREE.CircleGeometry(0.21, 32), BUBBLE_MAT, false, false), 0.32, 0.43));
+      const label = toyLabel(inner, 'BUBBLE', 0, -0.17, 0.61, '#2fae66');
+      for (const [x, y, r] of [[-0.2, -0.45, 0.08], [0.05, -0.5, 0.06], [0.19, -0.39, 0.09]]) inner.add(at(mesh(new THREE.TorusGeometry(r, 0.012, 8, 20), plastic(COL.white, 0.25)), x, y, 0.34));
+      const bubbles = [];
+      for (let i = 0; i < 12; i++) {
+        const r = 0.18 + (i % 3) * 0.035, bubble = new THREE.Group(); bubble.visible = false; inner.add(bubble); bubbles.push(bubble);
+        bubble.add(mesh(new THREE.SphereGeometry(r, 24, 16), BUBBLE_MAT, false, false));
+        const rim = mesh(new THREE.TorusGeometry(r * 0.96, 0.008, 6, 32), new THREE.MeshBasicMaterial({ color: [COL.pink, 0x65d5ed, COL.yellow][i % 3], transparent: true, opacity: 0.55, depthWrite: false }), false, false); bubble.add(rim);
+        const shine = at(mesh(new THREE.SphereGeometry(r * 0.13, 10, 8), new THREE.MeshBasicMaterial({ color: 0xffffff }), false, false), -r * 0.35, r * 0.45, r * 0.76); shine.scale.set(1, 1.7, 0.25); bubble.add(shine);
+      }
+      o.anim = { bubbles, label }; break;
+    }
     case 'marble': {
       const tint = o.target ? 0x1f7fe0 : [0xe85a7a, 0x46c08a, 0xf3a33a][(o.idn || 0) % 3];
       inner.add(mesh(new THREE.SphereGeometry(0.25, 40, 28), marbleMaterial(tint)));
@@ -1664,9 +1928,21 @@ function syncEditMesh(o) {
   g.position.set(o.x, o.y, 0);
   o.inner.scale.x = o.flip ? -1 : 1;
   g.rotation.z = PARTS[o.type].selfRot ? 0 : (o.angle || 0) * DEG;
+  if (o.type === 'splitter') o.anim.gate.rotation.z = -0.4;
+  if (o.type === 'wheel') o.anim.rotor.rotation.z = 0;
+  if (o.type === 'hammer') { o.anim.arm.rotation.z = 1.4; o.anim.button.position.y = -0.12; }
+  if (o.type === 'bubbler') { o.anim.bubbles.forEach(b => b.visible = false); o.anim.label.scale.x = o.flip ? -1 : 1; }
+  if (o.type === 'lift') {
+    o.anim.bucketL.position.set(-0.86, 0.2, 0); o.anim.bucketR.position.set(0.86, -1.4, 0); updateLiftRopes(o);
+    o.anim.liftGateL.position.set(-1.255, 0.2, 0); o.anim.liftGateR.position.set(1.255, -1.4, 0);
+    o.anim.liftGateL.rotation.z = o.anim.liftGateR.rotation.z = 0;
+  }
   if (o.type === 'seesaw') { o.plankMesh.position.set(o.x, o.y + 0.07, 0); o.plankMesh.rotation.z = (o.angle || 0) * DEG; }
   if (o.type === 'cannon') { o.anim.barrel.rotation.z = (o.angle || 0) * DEG; o.anim.barrel.position.x = CANNON_PIVOT[0]; o.shotMesh.visible = false; }
   if (o.type === 'balloon') resetRope(o);
+}
+function updateLiftRopes(o) {
+  [o.anim.bucketL, o.anim.bucketR].forEach((bucket, i) => { const length = Math.max(0.005, 0.99 - bucket.position.y - 0.77); o.anim.ropes[i].scale.y = length; o.anim.ropes[i].position.y = 0.99 - length / 2; o.anim.pulleys[i].rotation.z = (i ? -1 : 1) * (bucket.position.y + 0.6) / 0.15; });
 }
 function resetRope(o) { const R = o.rope; if (!R) return; for (let i = 0; i < R.pts.length; i++) { R.pts[i].set(o.group.position.x, o.group.position.y - 0.56 - i * 0.12, 0); R.prev[i].copy(R.pts[i]); } R.line.geometry.setFromPoints(R.pts); R.line.visible = true; }
 function updateRope(o, dt) {
@@ -1976,6 +2252,11 @@ function playEvent(e, live) {
     }
     case 'drum': Audio.drum(e.v); FXK.dust(e.x, e.y, 4); ono('drum', e.x, e.y + 0.6, 0.85 + e.v * 0.4); if (e.v > 0.6) shake(0.08); break;
     case 'fanSwitch': Audio.tone(1400, 0.05, 'square', 0.08); Audio.noise(0.04, 2500, 2, 0.3); ono('fanOn', e.x, e.y, 0.85); break;
+    case 'split': Audio.knock(0.4, 'block'); onoText('カタッ', '#e5483b', e.x, e.y + 0.45, 0.65); break;
+    case 'liftUnload': Audio.knock(0.3, 'block'); onoText('コロン', '#2f7de1', e.x, e.y + 0.4, 0.65); break;
+    case 'hammer': Audio.knock(0.6, 'block'); onoText('クルン！', '#f08a2c', e.x, e.y + 0.5, 0.75); break;
+    case 'bubble': Audio.tone(880, 0.08, 'sine', 0.025); break;
+    case 'bubblePop': Audio.tone(1600, 0.035, 'sine', 0.025); FXK.sparks(e.x, e.y, 5, [1.5, 2.8, 3], 0.8); break;
     case 'whistle': if (e.on) ono('whistle', e.x, e.y + 0.4, 0.9); break;
     case 'spring': Audio.boing(); FXK.dust(e.x, e.y + 0.2, 5); ono('spring', e.x, e.y + 0.5); break;
     case 'star': Audio.chime(); FXK.sparks(e.x, e.y, 26, [4, 3.2, 1], 5); FXK.ring(e.x, e.y); ono('star', e.x, e.y + 0.5, 0.9); break;
@@ -2079,8 +2360,10 @@ function worldToScreen(x, y, z = 0) {
 function placedCount() { return G.objects.filter(o => !o.fixed).length; }
 function others(o) { return G.objects.filter(x => x !== o); }
 function select(o) {
+  const changed = G.selected !== o;
   if (G.selected && G.selected !== o) setOutline(G.selected, null);
   G.selected = o; if (o) { setOutline(o, 0x2f7de1); showSelBar(o); } else hideSelBar();
+  if (changed && o && PARTS[o.type].tip && G.mode === 'edit') toast(PARTS[o.type].tip, 5200);
 }
 function newPart(type, x, y) {
   const o = { id: 'p' + (uid++), type, x, y, angle: 0, flip: false, fixed: false, idn: G.objects.length };
@@ -2273,6 +2556,11 @@ function applyFrame(frame, prevFrame) {
   s.dyn.forEach((d, i) => {
     const x = frame[i * 4], y = frame[i * 4 + 1], a = frame[i * 4 + 2], vis = frame[i * 4 + 3];
     const o = d.obj;
+    if (['gate', 'rotor', 'arm', 'bucketL', 'bucketR', 'liftGateL', 'liftGateR'].includes(d.part) || (d.part && d.part.startsWith('bubble'))) {
+      const f = o.flip ? -1 : 1, m = d.part.startsWith('bubble') ? o.anim.bubbles[Number(d.part.slice(6))] : o.anim[d.part];
+      m.visible = vis > 0; m.position.set((x - o.x) * f, y - o.y, 0); m.rotation.z = a * f;
+      return;
+    }
     if (d.part === 'plank') { o.plankMesh.position.set(x, y, 0); o.plankMesh.rotation.z = a; return; }
     if (d.part === 'bob') { o.group.rotation.z = Math.atan2(x - o.x, o.y - y); return; }
     if (d.part === 'shot') { o.shotMesh.visible = vis > 0; o.shotMesh.position.set(x, y, 0); o.shotMesh.rotation.z = a; return; }
@@ -2282,6 +2570,7 @@ function applyFrame(frame, prevFrame) {
       const dir = o.flip ? -1 : 1; o.anim.wheels.forEach(w => { w.rotation.z -= dx * dir / 0.13; }); o.anim.key.rotation.x += Math.abs(dx) * 3;
     }
   });
+  for (const o of G.objects) if (o.type === 'lift') updateLiftRopes(o);
 }
 function lastEventT(type, id, t) { let last = -9; for (const e of G.events) { if (e.t > t) break; if (e.type === type && e.id === id) last = e.t; } return last; }
 function fanOnAt(o, t) { let on = !o.off; for (const e of G.events) { if (e.t > t) break; if (e.type === 'fanSwitch' && e.id === o.id) on = e.on; } return on; }
@@ -2296,6 +2585,7 @@ function effectsAt(t) {
     else if (o.type === 'whistle') { const w = whistleAt(o.id, t); o.anim.body.position.set(w ? Math.sin(t * 160) * 0.008 : 0, w ? Math.cos(t * 130) * 0.008 : 0, 0); Audio.whistle(o.id, w ? (0.04 + w.s * 0.09) * (G.timeScale < 0.5 ? 0.4 : 1) : 0); }
     else if (o.type === 'bell') { const dt = t - lastEventT('bell', o.id, t); o.anim.bell.rotation.z = dt < 3 ? Math.sin(dt * 18) * 0.35 * Math.exp(-dt * 1.6) : 0; }
     else if (o.type === 'cannon') { const dt = t - lastEventT('cannon', o.id, t); o.anim.barrel.position.x = CANNON_PIVOT[0] - (dt < 0.6 ? Math.exp(-dt * 9) * 0.18 : 0); const fz = t - lastEventT('fuse', o.id, t); o.anim.btn.position.y = 0.22 - (fz < 0.4 ? 0.05 : 0); }
+    else if (o.type === 'hammer') o.anim.button.position.y = -0.12 - (t - lastEventT('hammer', o.id, t) < 0.85 ? 0.05 : 0);
     else if (o.type === 'conveyor') { const dir = o.flip ? -1 : 1; o.anim.tex.offset.x = 0.5 - t * CONVEYOR_SPEED / 0.6 * dir; o.anim.rollers.forEach(r => r.rotation.y = -t * CONVEYOR_SPEED / 0.11 * dir); }
   }
   if (G.starObj) {
@@ -2405,6 +2695,11 @@ function showResult() {
 // ---------- HUD ----------
 const STAR_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17l-5.7 3.1 1.2-6.4L2.8 9.3l6.4-.8z"/></svg>';
 const ICONS = {
+  splitter: '<svg viewBox="0 0 40 40"><path d="M14 5v12M26 5v12" stroke="#dfbb8c" stroke-width="5" stroke-linecap="round"/><path d="M20 21L5 31" stroke="#2f7de1" stroke-width="5" stroke-linecap="round"/><path d="M20 21l15 10" stroke="#f08a2c" stroke-width="5" stroke-linecap="round"/><path d="M13 24l13-5" stroke="#e5483b" stroke-width="4" stroke-linecap="round"/><circle cx="20" cy="21" r="2.5" fill="#f0c25a"/><circle cx="20" cy="10" r="3" fill="#7cc1f2"/></svg>',
+  lift: '<svg viewBox="0 0 40 40"><path d="M4 7h32M5 7v29M35 7v29" stroke="#c99c66" stroke-width="3" stroke-linecap="round"/><circle cx="12" cy="8" r="3" fill="#f0c25a"/><circle cx="28" cy="8" r="3" fill="#f0c25a"/><path d="M12 11v6M28 11v17" stroke="#a8743c" stroke-width="1.5"/><path d="M7 17v7h10v-7" fill="#efb1a5" stroke="#e5483b" stroke-width="2"/><path d="M23 28v7h10v-7" fill="#badcf2" stroke="#2f7de1" stroke-width="2"/></svg>',
+  wheel: '<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="12" fill="none" stroke="#f0c25a" stroke-width="2"/><path d="M20 5v30M5 20h30M9 9l22 22M9 31L31 9" stroke="#c99c66" stroke-width="3"/><path d="M14 6h12M14 34h12" stroke="#2f7de1" stroke-width="5" stroke-linecap="round"/><path d="M6 14v12M34 14v12" stroke="#2fae66" stroke-width="5" stroke-linecap="round"/><circle cx="20" cy="20" r="4" fill="#f0c25a"/></svg>',
+  hammer: '<svg viewBox="0 0 40 40"><path d="M20 24l9-16" stroke="#d9b27c" stroke-width="4"/><rect x="24" y="3" width="10" height="13" rx="3" fill="#f5c02f" transform="rotate(25 29 9)"/><circle cx="20" cy="24" r="4" fill="#f0c25a"/><rect x="4" y="26" width="8" height="8" rx="2" fill="#1f2b46"/><rect x="3" y="23" width="10" height="4" rx="2" fill="#e5483b"/><path d="M27 32a12 12 0 0 0 8-11" fill="none" stroke="#9fb6c8" stroke-width="2" stroke-dasharray="3 2"/></svg>',
+  bubbler: '<svg viewBox="0 0 40 40"><rect x="6" y="20" width="18" height="16" rx="4" fill="#2fae66"/><rect x="6" y="19" width="18" height="4" rx="2" fill="#f5c02f"/><path d="M21 20v-7" stroke="#9aa4ae" stroke-width="2"/><circle cx="21" cy="10" r="5" fill="none" stroke="#ef7aa6" stroke-width="2.5"/><circle cx="32" cy="16" r="5" fill="#dff4ff" fill-opacity=".6" stroke="#65cce5"/><circle cx="33" cy="5" r="3" fill="none" stroke="#ef7aa6"/><path d="M30 14l1-1" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>',
   marble: '<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="12" fill="#7cc1f2"/><circle cx="20" cy="20" r="12" fill="none" stroke="#2b6ea8" stroke-width="2"/><path d="M13 22c4-6 10-6 14-2" stroke="#ffc83a" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="15" cy="15" r="3" fill="#fff" opacity=".8"/></svg>',
   superball: '<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="11" fill="#ff5a8a"/><path d="M9.5 17h21v3h-21zM9.2 20h21.6v3H9.2zM10 23h20v3H10z" fill="#ffd23f"/><path d="M9.2 20h21.6v3H9.2z" fill="#3fd0ff"/><circle cx="16" cy="15" r="2.5" fill="#fff" opacity=".85"/></svg>',
   ironball: '<svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="13" fill="#8a949e"/><circle cx="20" cy="20" r="13" fill="none" stroke="#4b525a" stroke-width="2"/><circle cx="15" cy="15" r="4" fill="#eef2f6" opacity=".8"/></svg>',
@@ -2469,6 +2764,7 @@ function renderTray() {
   for (const t of PART_ORDER.filter(t => G.inv[t] !== undefined)) {
     const n = G.inv[t]; const b = document.createElement('button'); b.className = 'part'; b.type = 'button'; b.dataset.type = t;
     b.disabled = n === 0; b.setAttribute('aria-label', `${PARTS[t].name} 残り${n === Infinity ? '無制限' : n}`);
+    if (PARTS[t].tip) { b.title = PARTS[t].tip; b.classList.add('gimmick'); }
     b.innerHTML = `<span class="ico">${ICONS[t]}</span><span class="pname">${PARTS[t].name}</span><span class="cnt">${n === Infinity ? '∞' : '×' + n}</span>`;
     b.addEventListener('pointerdown', (e) => {
       Audio.init(); if (G.mode !== 'edit' || G.inv[t] === 0) return; e.preventDefault();
