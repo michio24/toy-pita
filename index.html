@@ -231,6 +231,7 @@ body.dopa .dopaToggle { background: linear-gradient(90deg, #fff0f6, #fff8e0, #ea
 body.dopa .dopaToggle .dl { background: linear-gradient(90deg, #ff3d7f, #ff9800, #2fae66, #2f7de1, #b44dff); -webkit-background-clip: text; background-clip: text; color: transparent; }
 body.dopa #chain { display: none; }
 #dopaHud { position: absolute; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 72px); transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 16px; border-radius: 999px; background: linear-gradient(90deg, #1f2b46, #3b2466); color: #fff; z-index: 3; pointer-events: none; box-shadow: 0 6px 20px rgba(80,30,140,.35), 0 0 0 3px rgba(255,255,255,.6); white-space: nowrap; }
+#dopaHud.replay { top: calc(9vh + env(safe-area-inset-top, 0px) + 50px); }
 #dopaHud .sc { display: flex; align-items: baseline; gap: 6px; }
 #dopaHud small { font-size: 10px; font-weight: 900; letter-spacing: .14em; opacity: .7; }
 #dopaHud .sc b { font-family: var(--font-display); font-weight: 400; font-size: 26px; font-variant-numeric: tabular-nums; min-width: 4ch; text-align: right; background: linear-gradient(180deg, #fff6b0, #ffc83a); -webkit-background-clip: text; background-clip: text; color: transparent; }
@@ -464,8 +465,8 @@ const LEVELS = [
     terrain: [
       { x: -7.25, y: 8.3, w: 0.12, h: 1.8, c: 'yellow' },
       { x: -6.25, y: 8.3, w: 0.12, h: 1.8, c: 'yellow' },
-      { x: 0.0, y: 0.68, w: 2.4, h: 0.2, a: 38, c: 'red' },
-      { x: 2.4, y: 0.6, w: 0.4, h: 1.2, c: 'blue' },
+      { x: 0.5, y: 0.68, w: 3.2, h: 0.2, a: 38, c: 'red' },
+      { x: 2.4, y: 0.4, w: 0.4, h: 0.8, c: 'blue' },
     ],
     fixed: [
       { type: 'marble', x: -6.75, y: 8.6, target: true },
@@ -533,11 +534,12 @@ const LEVELS = [
   },
   {
     id: 's8', name: '大砲ドーン', goalText: '大砲の弾で、塔の上のベルを鳴らそう',
-    hint: '大砲は何かが触れると発射する。ビー玉を大砲まで届けて、狙いは回転で調整。',
+    hint: '大砲は何かが触れると発射する。板で手前の壁を越えて、ビー玉を大砲まで届けよう。狙いは回転で調整。',
     terrain: [
       { x: -5.8, y: 7.2, w: 4.6, h: 0.3, a: -10, c: 'yellow' },
       { x: 6.6, y: 3.0, w: 1.6, h: 6.0, c: 'green' },
       { x: 2.8, y: 2.8, w: 0.3, h: 5.6, c: 'red' },
+      { x: -1, y: 1.5, w: 0.3, h: 3, c: 'blue' },
     ],
     fixed: [
       { type: 'marble', x: -7.6, y: 7.85, target: true },
@@ -547,7 +549,7 @@ const LEVELS = [
     goals: [{ kind: 'bell', any: true }],
     star: { x: 2.8, y: 8.6 },
     par: 2,
-    solution: [{ type: 'plank', x: -2.6, y: 4.0, angle: -30 }, { type: 'cannon', x: -0.2, y: 0.45, angle: 75 }],
+    solution: [{ type: 'plank', x: -2, y: 3.5, angle: -30 }, { type: 'cannon', x: -0.2, y: 0.45, angle: 75 }],
   },
   {
     id: 's9', name: 'コンベア工場', goalText: '積み木を3つともおもちゃ箱に入れよう',
@@ -2443,6 +2445,7 @@ function renderHUD() {
   $('#speedBtn').textContent = G.speed === 1 ? '早送り' : '×2';
   $('#speedBtn').classList.toggle('on', G.speed > 1);
   $('#replayBtn').hidden = !(L.sandbox && G.mode === 'run');
+  $('#dopaHud').classList.toggle('replay', G.mode === 'replay');
   $('#topbar').classList.toggle('dim', G.mode === 'replay');
   $('#tray').classList.toggle('dim', G.mode === 'replay' || G.mode === 'slow');
 }
